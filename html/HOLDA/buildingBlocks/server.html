@@ -1,0 +1,1684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>HOLDA.buildingBlocks.server API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS_CHTML" integrity="sha256-kZafAc6mZvK3W3v1pHOcUix30OHQN6pU/NO2oFkqZVw=" crossorigin></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>HOLDA.buildingBlocks.server</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import ray
+import torch
+from utils.messages import CV_ValidationMessage, HoldOut_ValidationMessage
+from utils.messages import ServerMessage
+import datetime
+from utils.metrics_sklearn import metrics_to_string, print_metrics
+from metadata.meta import CheckPoint
+import numpy as np
+import copy
+import math
+import os
+
+
+class Server:
+    &#34;&#34;&#34;
+    ## Description: 
+
+    It represents the central server of the hierarchy.
+    It orchestrates the whole training process.
+    Its children nodes could  be either a RemoteTrustedProxy or a RemoteLocalClient.
+    It performs the Update-Aggregate-Evaluate loop.
+    It stores the global model in its internal state.
+    &#34;&#34;&#34;
+
+    def __init__(self, id,
+                 n_folds, val_split_percentage, val_from_file,
+                 hyperparams, log_file, checkpoint_best_path,
+                 checkpoint_epoch_path,
+                 aggregation_fn,
+                 init_model_fn,
+                 extract_model_fn,
+                 children_list_fn,
+                 use_deltas=False,
+                 sample_size=1,
+                 from_check=False,
+                 starting_model_path=None,
+                 target_label=&#39;PRINC_SURG_PROC_CODE&#39;
+                 ):
+
+        self.target_label = target_label
+        self.starting_model = None
+        if starting_model_path:
+            self.starting_model = torch.load(open(starting_model_path, &#39;rb&#39;))
+
+        self.from_check = from_check
+        self.sample_size = sample_size
+        self.use_deltas = use_deltas
+        self.val_from_file = val_from_file
+        self.children_list = [child()
+                              for child in children_list_fn]
+
+        self.id = id
+        self.aggregation_fn = aggregation_fn
+        self.init_model_fn = init_model_fn
+        self.extract_model_fn = extract_model_fn
+        self.log_file = log_file
+        self.checkpoint_best_path = checkpoint_best_path
+        self.checkpoint_epoch_path = checkpoint_epoch_path
+        self.val_from_file = val_from_file
+        self.hyperparams = hyperparams
+        self.n_folds = n_folds
+        self.global_model = None
+        self.server_msg = None
+
+        self.epoch2ckpt = self.hyperparams.epoch2ckpt
+        self.global_epochs = self.hyperparams.n_global_epochs
+        self.patience = self.hyperparams.global_patience
+
+        self.current_train_weights = 0
+        self.current_val_weights = 0
+
+        self.total_train_weights = 0
+        self.total_val_weights = 0
+        self.best_epoch = 0
+        self.selected_children = self.children_list
+        self.n_global_model_updates = 0
+        if n_folds &gt; 1:
+            self.validation_msg = CV_ValidationMessage(
+                total_folds=n_folds, current_fold=1,
+                from_file=self.val_from_file)
+        else:
+            self.validation_msg = HoldOut_ValidationMessage(
+                val_split_percentage,
+                from_file=self.val_from_file)
+
+        if not self.from_check:
+            with open(log_file, &#39;w&#39;) as f:
+                f.write(f&#39;{datetime.datetime.now()}: {self.id} ATTIVATO\n&#39;)
+                f.write(f&#39;Training: Eseguo {self.global_epochs} epoche globali &#39;
+                        f&#39;Early stopping patience = {self.patience} epoche\n&#39;)
+                if n_folds &gt; 1:
+                    f.write(f&#39;Validazione: Eseguo una {n_folds}Fold-CV\n&#39;)
+                else:
+                    f.write(
+                        f&#39;Validazione: Eseguo una HoldOut con lo split &#39;
+                        f&#39;{1-val_split_percentage}-{val_split_percentage}\n&#39;)
+
+    def eval_on_test(self):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It evaluates the model described in \(starting\_model\) on the test or validation set.
+
+        ## Returns:
+        \(train\_metrics, val\_metrics\): (dict,dict)
+            The evaluation scores obtained by the model on the training and validation data.
+
+        &#34;&#34;&#34;
+        self.global_model = self.starting_model
+        self.server_msg = ServerMessage(
+            new_model=copy.deepcopy(self.global_model.state_dict()),
+            validation_msg=self.validation_msg,
+            send_deltas=self.use_deltas,
+            target_label=self.target_label)
+
+        results = self.evaluate_metrics(self.server_msg)
+        aggregated_result = self.aggregation_fn(results)
+        train_metrics = aggregated_result.train_metrics
+        val_metrics = aggregated_result.validation_metrics
+        return train_metrics, val_metrics
+
+    def init_computation(self):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It initializes the overall computation by calculating the training and validation weights.
+
+        NOTE:
+        It isn&#39;t necessary if the children are sampled at the beginning of each training round!
+        &#34;&#34;&#34;
+        self.total_train_weights, self.total_val_weights = self.get_weights(
+            self.validation_msg)
+
+    def get_weights(self, message):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It computes the weights, i.e. the total number of records in the training and validation data.
+
+        ## Args:
+
+        `message`: (ValidationMessage)
+            A message containg the validation strategy that has to be perfomed, i.e k-foldCV or Hold-Out
+
+        ## Returns:
+
+        \(train\_weights,val\_weights\): (float, float)
+            The weights associated to the training and validation data.
+        &#34;&#34;&#34;
+        train_weights = 0
+        val_weights = 0
+        handlers = [child.get_weights.remote(
+            message) for child in self.selected_children]
+        for handler in handlers:
+            train_weight, val_weight = ray.get(handler)
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write(
+                    f&#39;{datetime.datetime.now()}: Get_Weights: &#39;
+                    f&#39;Ricevuto: Training = {train_weight} &#39;
+                    f&#39;Validation = {val_weight}\n&#39;)
+            train_weights += train_weight
+            val_weights += val_weight
+
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write(f&#39;{datetime.datetime.now()}: Get_Weights: Pesi totali: &#39;
+                    f&#39;Training = {train_weights} &#39;
+                    f&#39;Validation = {val_weights}\n&#39;)
+        return train_weights, val_weights
+
+    def _sample_children(self, sample_size):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It randomly samples a fraction \(sample\_size \\in (0,1] \) of its direct children
+
+        ## Args:
+
+        `sample_size`: (float \(\\in (0,1]\))
+            The fraction of children to select
+
+        &#34;&#34;&#34;
+        if sample_size == 1:
+            self.selected_children = self.children_list
+        else:
+            n_samples = math.ceil(sample_size*len(self.children_list))
+            self.selected_children = list(np.random.choice(
+                self.children_list, size=n_samples, replace=False))
+
+    def broadcast_train_msg(self, message):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It trasmits the message stored in `message` to all its selected children.
+
+        ## Args:
+
+        `message` : (ServerMessage)
+            The message to be transmitted to the children
+
+        ## Returns:
+
+        `handlers` : (list of Future)
+            A list containing the handlers needed to get back the result of the computation performed by each child.
+            The length of the list is equal to the number of selected children.   
+        &#34;&#34;&#34;
+        handlers = []
+        for child in self.selected_children:
+            handlers.append(child.broadcast_train_msg.remote(
+                message))
+        return handlers
+
+    def evaluate_metrics(self, message):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It evaluates the model stored in `message` according to the predefined metrics.
+        The message is transmitted to every child node.
+
+        ## Args:
+
+        `message` : (ServerMessage)
+            The message to be transmitted to the children
+
+        ## Returns:
+
+        `handlers` : (list of Future)
+            A list containing the handlers needed to get back the result of the computation performed by each child.
+            The length of the list is equal to the number of children.   
+        &#34;&#34;&#34;
+        handlers = []
+        for child in self.children_list:
+            handlers.append(child.evaluate_metrics.remote(
+                message))
+        return handlers
+
+    def federated_training(self):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It executes the full training algorithm, i.e. HOLDA, on the selected training and validation data.
+
+        ## Returns:
+
+        \(best\_train\_history, best\_val\_history\) : (list, list)
+            The training and validation history of each considered metric during the overall training process.
+        &#34;&#34;&#34;
+        if self.from_check:
+            ckpt = torch.load(open((f&#39;{self.checkpoint_best_path}&#39;
+                                    ), &#39;rb&#39;))
+
+            train_history = ckpt.train_metrics
+            val_history = ckpt.val_metrics
+            best_val_f1 = ckpt.val_metrics[&#39;val_f1&#39;][-1]
+            self.global_model = self.hyperparams.build_model_fn()
+            self.global_model.load_state_dict(ckpt.model)
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write(
+                    f&#39;{datetime.datetime.now()}: RESTART FROM THE LAST CHECKPOINT\n&#39;)
+            epoch = len(val_history[&#39;val_f1&#39;])
+            self.best_epoch = epoch
+            print(&#39;BEST F1: &#39;, best_val_f1)
+        else:
+            train_history = {}
+            val_history = {}
+            best_val_f1 = -float(&#39;inf&#39;)
+            self.global_model = self.hyperparams.build_model_fn()
+            epoch = 0
+            self.best_epoch = 0
+
+        if self.starting_model:
+            self.global_model = self.starting_model
+
+        waiting_epochs = 0
+        early_stop = False
+
+        self.server_msg = ServerMessage(
+            new_model=copy.deepcopy(self.global_model.state_dict()),
+            validation_msg=self.validation_msg,
+            send_deltas=self.use_deltas,
+            target_label=self.target_label)
+
+        self.server_msg.new_model = copy.deepcopy(
+            self.global_model.state_dict())
+
+        results = self.evaluate_metrics(self.server_msg)
+        aggregated_result = self.aggregation_fn(results)
+        train_metrics = aggregated_result.train_metrics
+        val_metrics = aggregated_result.validation_metrics
+
+        for metric, value in train_metrics.items():
+            train_history[f&#39;train_{metric}&#39;] = [value]
+
+        for metric, value in val_metrics.items():
+            val_history[f&#39;val_{metric}&#39;] = [value]
+
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write(
+                (f&#39;{datetime.datetime.now()}: Epoch 0: &#39;
+                 f&#39;TRAIN = {metrics_to_string(train_metrics)}\t&#39;
+                 f&#39;VAL = {metrics_to_string(val_metrics)}\n&#39;)
+            )
+
+        if val_metrics[&#39;f1&#39;] &gt; best_val_f1:
+            self.best_epoch = epoch
+            best_val_f1 = val_metrics[&#39;f1&#39;]
+            ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                              train_history, val_history)
+            torch.save(ckpt, open((f&#39;{self.checkpoint_best_path}&#39;), &#39;wb&#39;))
+            del ckpt
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                         f&#39;CHECKPOINT: Better Model Found\n&#39;
+                         ))
+
+        while (not early_stop) and (epoch &lt; self.global_epochs):
+            self._sample_children(sample_size=self.sample_size)
+            results = self.broadcast_train_msg(self.server_msg)
+
+            aggregated_result = self.aggregation_fn(results)
+
+            new_model = aggregated_result.new_model
+
+            result_model = copy.deepcopy(new_model)
+
+            if self.use_deltas:
+                for key, value in self.global_model.state_dict().items():
+                    result_model[key] = result_model[key] + value
+
+            self.global_model.load_state_dict(result_model)
+            self.server_msg.new_model = copy.deepcopy(result_model)
+
+            results = self.evaluate_metrics(self.server_msg)
+            aggregated_result = self.aggregation_fn(results)
+            train_metrics = aggregated_result.train_metrics
+            val_metrics = aggregated_result.validation_metrics
+
+            if len(train_history) == 0:
+                for metric, value in train_metrics.items():
+                    train_history[f&#39;train_{metric}&#39;] = [value]
+
+                for metric, value in val_metrics.items():
+                    val_history[f&#39;val_{metric}&#39;] = [value]
+
+            else:
+                for metric, value in train_metrics.items():
+                    train_history[f&#39;train_{metric}&#39;].append(value)
+
+                for metric, value in val_metrics.items():
+                    val_history[f&#39;val_{metric}&#39;].append(value)
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write(
+                    (f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                        f&#39;TRAIN = {metrics_to_string(train_metrics)}\t&#39;
+                        f&#39;VAL = {metrics_to_string(val_metrics)}\n&#39;)
+                )
+
+            if val_metrics[&#39;f1&#39;] &gt; best_val_f1:
+                waiting_epochs = 0
+                self.best_epoch = epoch
+                best_val_f1 = val_metrics[&#39;f1&#39;]
+                ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                                  train_history, val_history)
+                torch.save(ckpt, open((f&#39;{self.checkpoint_best_path}&#39;), &#39;wb&#39;))
+                torch.save(self.extract_model_fn(self.global_model),
+                           (f&#39;{os.path.dirname(self.checkpoint_best_path)}/global_model_{self.n_global_model_updates}.pt&#39;))
+                self.n_global_model_updates += 1
+                del ckpt
+
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write((f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                             f&#39;CHECKPOINT: Better Model Found\n&#39;
+                             ))
+
+            else:
+                waiting_epochs += 1
+                if waiting_epochs % self.patience == 0:
+                    early_stop = True
+                    with open(self.log_file, &#39;a&#39;) as f:
+                        f.write((f&#39;{datetime.datetime.now()}:&#39;
+                                 &#39;EARLY STOPPING\n&#39;
+                                 ))
+
+            if epoch % self.epoch2ckpt == 0:
+                ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                                  train_history, val_history)
+
+                torch.save(ckpt, open((f&#39;{self.checkpoint_epoch_path}&#39;), &#39;wb&#39;))
+
+                del ckpt
+
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write((f&#39;{datetime.datetime.now()}:&#39;
+                             f&#39; Epoch {epoch + 1}: &#39;
+                             f&#39;CHECKPOINT: Passed &#39;
+                             f&#39;{self.epoch2ckpt} epochs\n&#39;
+                             ))
+            epoch += 1
+
+        ckpt = torch.load(open((f&#39;{self.checkpoint_best_path}&#39;), &#39;rb&#39;))
+        best_model = ckpt.model
+        best_train_history = ckpt.train_metrics
+        best_val_history = ckpt.val_metrics
+        self.global_model = self.init_model_fn(self.global_model, best_model)
+        torch.save(self.global_model,
+                   f&#39;{os.path.dirname(self.checkpoint_best_path)}/global_model.h5&#39;)
+        del ckpt
+        return best_train_history, best_val_history
+
+    def _extend_history(self, history_list):
+        max_len = 0
+        for history in history_list:
+            max_len = max(max_len, len(history))
+
+        mean_hist = np.zeros((len(history_list), max_len))
+        for i, history in enumerate(history_list):
+            mean_hist[i, :len(history)] = history
+            mean_hist[i, len(history):] = history[-1]
+
+        mean_hist = np.round(np.mean(mean_hist, axis=0), 3)
+        return mean_hist
+
+    def execute(self):
+        &#34;&#34;&#34;
+        ## Description:
+
+        The main entry point of HOLDA.
+        The function starts the whole training process of HOLDA.
+
+        ## Returns:
+
+        `(train_history, val_history) : (dict,dict)`
+        The history with the scores about the metrics considered, computed on the training and validation data, respectively.
+        A general entry of the dictionary is &#34;{&#39;metric_name&#39;: [v_1,v_2,...v_k]}&#34;
+
+        NOTE:
+            The k-foldCV process has still to be tested!
+
+        &#34;&#34;&#34;
+        if isinstance(self.validation_msg, CV_ValidationMessage):
+            total_folds = self.validation_msg.total_folds
+
+            train_folds_hist = {}
+            val_folds_hist = {}
+
+            for fold in range(self.validation_msg.total_folds):
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write(f&#39;Starting Fold {fold+1} / {total_folds}\n&#39;)
+
+                self.validation_msg.current_fold = fold
+
+                train_history, val_history = self.federated_training()
+
+                current_train_result = {}
+                current_val_result = {}
+
+                for metric, values in train_history.items():
+                    current_train_result[metric] = values[-1]
+                    if fold == 0:
+                        train_folds_hist[metric] = [values]
+
+                    else:
+                        train_folds_hist[metric].append(values)
+
+                for metric, values in val_history.items():
+                    current_val_result[metric] = values[-1]
+                    if fold == 0:
+                        val_folds_hist[metric] = [values]
+                    else:
+                        val_folds_hist[metric].append(values)
+
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write((f&#39;{datetime.datetime.now()}: &#39;
+                             f&#39;Ended Fold {fold+1} / {total_folds}: &#39;
+                             f&#39;TRAIN = &#39;
+                             f&#39;{metrics_to_string(current_train_result)}\t&#39;
+                             f&#39;VAL = &#39;
+                             f&#39;{metrics_to_string(current_val_result)}\n\n&#39;))
+
+            # Ho terminato di esaminare tutti i folds
+            for metric, values in train_folds_hist.items():
+                train_folds_hist[metric] = self._extend_history(
+                    train_folds_hist[metric])
+
+            for metric, values in val_folds_hist.items():
+                val_folds_hist[metric] = self._extend_history(
+                    val_folds_hist[metric])
+
+            train_cv_result = {}
+            val_cv_result = {}
+
+            for metric, values in train_folds_hist.items():
+                train_cv_result[metric] = values[-1]
+            for metric, values in val_folds_hist.items():
+                val_cv_result[metric] = values[-1]
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}: &#39;
+                         f&#39;Ended CV: FINAL RESULTS: &#39;
+                         f&#39;TRAIN = {metrics_to_string(train_cv_result)}\t&#39;
+                         f&#39;VAL = {metrics_to_string(val_cv_result)}\n\n&#39;))
+
+            return train_folds_hist, val_folds_hist
+
+        else:  # hold-out strategy
+
+            train_history, val_history = self.federated_training()
+            train_result = {}
+            val_result = {}
+            for metric, values in train_history.items():
+                train_result[metric] = values[-1]
+            for metric, values in val_history.items():
+                val_result[metric] = values[-1]
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}: &#39;
+                         f&#39;Ended HOLD OUT: FINAL RESULTS: &#39;
+                         f&#39;TRAIN = {metrics_to_string(train_result)}\t&#39;
+                         f&#39;VAL = {metrics_to_string(val_result)}\n\n&#39;))
+
+            return train_history, val_history
+
+    def shutdown(self):
+        &#34;&#34;&#34;
+        It starts the shutdown phase, which frees the resources and closes the federation.
+        &#34;&#34;&#34;
+        handlers = [child.shutdown.remote()
+                    for child in self.children_list]
+        for handler in handlers:
+            ray.get(handler)
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write((f&#39;{datetime.datetime.now()}: &#39;
+                     f&#39;Shutdown completed\n&#39;))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="HOLDA.buildingBlocks.server.Server"><code class="flex name class">
+<span>class <span class="ident">Server</span></span>
+<span>(</span><span>id, n_folds, val_split_percentage, val_from_file, hyperparams, log_file, checkpoint_best_path, checkpoint_epoch_path, aggregation_fn, init_model_fn, extract_model_fn, children_list_fn, use_deltas=False, sample_size=1, from_check=False, starting_model_path=None, target_label='PRINC_SURG_PROC_CODE')</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="description">Description:</h2>
+<p>It represents the central server of the hierarchy.
+It orchestrates the whole training process.
+Its children nodes could
+be either a RemoteTrustedProxy or a RemoteLocalClient.
+It performs the Update-Aggregate-Evaluate loop.
+It stores the global model in its internal state.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Server:
+    &#34;&#34;&#34;
+    ## Description: 
+
+    It represents the central server of the hierarchy.
+    It orchestrates the whole training process.
+    Its children nodes could  be either a RemoteTrustedProxy or a RemoteLocalClient.
+    It performs the Update-Aggregate-Evaluate loop.
+    It stores the global model in its internal state.
+    &#34;&#34;&#34;
+
+    def __init__(self, id,
+                 n_folds, val_split_percentage, val_from_file,
+                 hyperparams, log_file, checkpoint_best_path,
+                 checkpoint_epoch_path,
+                 aggregation_fn,
+                 init_model_fn,
+                 extract_model_fn,
+                 children_list_fn,
+                 use_deltas=False,
+                 sample_size=1,
+                 from_check=False,
+                 starting_model_path=None,
+                 target_label=&#39;PRINC_SURG_PROC_CODE&#39;
+                 ):
+
+        self.target_label = target_label
+        self.starting_model = None
+        if starting_model_path:
+            self.starting_model = torch.load(open(starting_model_path, &#39;rb&#39;))
+
+        self.from_check = from_check
+        self.sample_size = sample_size
+        self.use_deltas = use_deltas
+        self.val_from_file = val_from_file
+        self.children_list = [child()
+                              for child in children_list_fn]
+
+        self.id = id
+        self.aggregation_fn = aggregation_fn
+        self.init_model_fn = init_model_fn
+        self.extract_model_fn = extract_model_fn
+        self.log_file = log_file
+        self.checkpoint_best_path = checkpoint_best_path
+        self.checkpoint_epoch_path = checkpoint_epoch_path
+        self.val_from_file = val_from_file
+        self.hyperparams = hyperparams
+        self.n_folds = n_folds
+        self.global_model = None
+        self.server_msg = None
+
+        self.epoch2ckpt = self.hyperparams.epoch2ckpt
+        self.global_epochs = self.hyperparams.n_global_epochs
+        self.patience = self.hyperparams.global_patience
+
+        self.current_train_weights = 0
+        self.current_val_weights = 0
+
+        self.total_train_weights = 0
+        self.total_val_weights = 0
+        self.best_epoch = 0
+        self.selected_children = self.children_list
+        self.n_global_model_updates = 0
+        if n_folds &gt; 1:
+            self.validation_msg = CV_ValidationMessage(
+                total_folds=n_folds, current_fold=1,
+                from_file=self.val_from_file)
+        else:
+            self.validation_msg = HoldOut_ValidationMessage(
+                val_split_percentage,
+                from_file=self.val_from_file)
+
+        if not self.from_check:
+            with open(log_file, &#39;w&#39;) as f:
+                f.write(f&#39;{datetime.datetime.now()}: {self.id} ATTIVATO\n&#39;)
+                f.write(f&#39;Training: Eseguo {self.global_epochs} epoche globali &#39;
+                        f&#39;Early stopping patience = {self.patience} epoche\n&#39;)
+                if n_folds &gt; 1:
+                    f.write(f&#39;Validazione: Eseguo una {n_folds}Fold-CV\n&#39;)
+                else:
+                    f.write(
+                        f&#39;Validazione: Eseguo una HoldOut con lo split &#39;
+                        f&#39;{1-val_split_percentage}-{val_split_percentage}\n&#39;)
+
+    def eval_on_test(self):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It evaluates the model described in \(starting\_model\) on the test or validation set.
+
+        ## Returns:
+        \(train\_metrics, val\_metrics\): (dict,dict)
+            The evaluation scores obtained by the model on the training and validation data.
+
+        &#34;&#34;&#34;
+        self.global_model = self.starting_model
+        self.server_msg = ServerMessage(
+            new_model=copy.deepcopy(self.global_model.state_dict()),
+            validation_msg=self.validation_msg,
+            send_deltas=self.use_deltas,
+            target_label=self.target_label)
+
+        results = self.evaluate_metrics(self.server_msg)
+        aggregated_result = self.aggregation_fn(results)
+        train_metrics = aggregated_result.train_metrics
+        val_metrics = aggregated_result.validation_metrics
+        return train_metrics, val_metrics
+
+    def init_computation(self):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It initializes the overall computation by calculating the training and validation weights.
+
+        NOTE:
+        It isn&#39;t necessary if the children are sampled at the beginning of each training round!
+        &#34;&#34;&#34;
+        self.total_train_weights, self.total_val_weights = self.get_weights(
+            self.validation_msg)
+
+    def get_weights(self, message):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It computes the weights, i.e. the total number of records in the training and validation data.
+
+        ## Args:
+
+        `message`: (ValidationMessage)
+            A message containg the validation strategy that has to be perfomed, i.e k-foldCV or Hold-Out
+
+        ## Returns:
+
+        \(train\_weights,val\_weights\): (float, float)
+            The weights associated to the training and validation data.
+        &#34;&#34;&#34;
+        train_weights = 0
+        val_weights = 0
+        handlers = [child.get_weights.remote(
+            message) for child in self.selected_children]
+        for handler in handlers:
+            train_weight, val_weight = ray.get(handler)
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write(
+                    f&#39;{datetime.datetime.now()}: Get_Weights: &#39;
+                    f&#39;Ricevuto: Training = {train_weight} &#39;
+                    f&#39;Validation = {val_weight}\n&#39;)
+            train_weights += train_weight
+            val_weights += val_weight
+
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write(f&#39;{datetime.datetime.now()}: Get_Weights: Pesi totali: &#39;
+                    f&#39;Training = {train_weights} &#39;
+                    f&#39;Validation = {val_weights}\n&#39;)
+        return train_weights, val_weights
+
+    def _sample_children(self, sample_size):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It randomly samples a fraction \(sample\_size \\in (0,1] \) of its direct children
+
+        ## Args:
+
+        `sample_size`: (float \(\\in (0,1]\))
+            The fraction of children to select
+
+        &#34;&#34;&#34;
+        if sample_size == 1:
+            self.selected_children = self.children_list
+        else:
+            n_samples = math.ceil(sample_size*len(self.children_list))
+            self.selected_children = list(np.random.choice(
+                self.children_list, size=n_samples, replace=False))
+
+    def broadcast_train_msg(self, message):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It trasmits the message stored in `message` to all its selected children.
+
+        ## Args:
+
+        `message` : (ServerMessage)
+            The message to be transmitted to the children
+
+        ## Returns:
+
+        `handlers` : (list of Future)
+            A list containing the handlers needed to get back the result of the computation performed by each child.
+            The length of the list is equal to the number of selected children.   
+        &#34;&#34;&#34;
+        handlers = []
+        for child in self.selected_children:
+            handlers.append(child.broadcast_train_msg.remote(
+                message))
+        return handlers
+
+    def evaluate_metrics(self, message):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It evaluates the model stored in `message` according to the predefined metrics.
+        The message is transmitted to every child node.
+
+        ## Args:
+
+        `message` : (ServerMessage)
+            The message to be transmitted to the children
+
+        ## Returns:
+
+        `handlers` : (list of Future)
+            A list containing the handlers needed to get back the result of the computation performed by each child.
+            The length of the list is equal to the number of children.   
+        &#34;&#34;&#34;
+        handlers = []
+        for child in self.children_list:
+            handlers.append(child.evaluate_metrics.remote(
+                message))
+        return handlers
+
+    def federated_training(self):
+        &#34;&#34;&#34;
+        ## Description:
+
+        It executes the full training algorithm, i.e. HOLDA, on the selected training and validation data.
+
+        ## Returns:
+
+        \(best\_train\_history, best\_val\_history\) : (list, list)
+            The training and validation history of each considered metric during the overall training process.
+        &#34;&#34;&#34;
+        if self.from_check:
+            ckpt = torch.load(open((f&#39;{self.checkpoint_best_path}&#39;
+                                    ), &#39;rb&#39;))
+
+            train_history = ckpt.train_metrics
+            val_history = ckpt.val_metrics
+            best_val_f1 = ckpt.val_metrics[&#39;val_f1&#39;][-1]
+            self.global_model = self.hyperparams.build_model_fn()
+            self.global_model.load_state_dict(ckpt.model)
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write(
+                    f&#39;{datetime.datetime.now()}: RESTART FROM THE LAST CHECKPOINT\n&#39;)
+            epoch = len(val_history[&#39;val_f1&#39;])
+            self.best_epoch = epoch
+            print(&#39;BEST F1: &#39;, best_val_f1)
+        else:
+            train_history = {}
+            val_history = {}
+            best_val_f1 = -float(&#39;inf&#39;)
+            self.global_model = self.hyperparams.build_model_fn()
+            epoch = 0
+            self.best_epoch = 0
+
+        if self.starting_model:
+            self.global_model = self.starting_model
+
+        waiting_epochs = 0
+        early_stop = False
+
+        self.server_msg = ServerMessage(
+            new_model=copy.deepcopy(self.global_model.state_dict()),
+            validation_msg=self.validation_msg,
+            send_deltas=self.use_deltas,
+            target_label=self.target_label)
+
+        self.server_msg.new_model = copy.deepcopy(
+            self.global_model.state_dict())
+
+        results = self.evaluate_metrics(self.server_msg)
+        aggregated_result = self.aggregation_fn(results)
+        train_metrics = aggregated_result.train_metrics
+        val_metrics = aggregated_result.validation_metrics
+
+        for metric, value in train_metrics.items():
+            train_history[f&#39;train_{metric}&#39;] = [value]
+
+        for metric, value in val_metrics.items():
+            val_history[f&#39;val_{metric}&#39;] = [value]
+
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write(
+                (f&#39;{datetime.datetime.now()}: Epoch 0: &#39;
+                 f&#39;TRAIN = {metrics_to_string(train_metrics)}\t&#39;
+                 f&#39;VAL = {metrics_to_string(val_metrics)}\n&#39;)
+            )
+
+        if val_metrics[&#39;f1&#39;] &gt; best_val_f1:
+            self.best_epoch = epoch
+            best_val_f1 = val_metrics[&#39;f1&#39;]
+            ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                              train_history, val_history)
+            torch.save(ckpt, open((f&#39;{self.checkpoint_best_path}&#39;), &#39;wb&#39;))
+            del ckpt
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                         f&#39;CHECKPOINT: Better Model Found\n&#39;
+                         ))
+
+        while (not early_stop) and (epoch &lt; self.global_epochs):
+            self._sample_children(sample_size=self.sample_size)
+            results = self.broadcast_train_msg(self.server_msg)
+
+            aggregated_result = self.aggregation_fn(results)
+
+            new_model = aggregated_result.new_model
+
+            result_model = copy.deepcopy(new_model)
+
+            if self.use_deltas:
+                for key, value in self.global_model.state_dict().items():
+                    result_model[key] = result_model[key] + value
+
+            self.global_model.load_state_dict(result_model)
+            self.server_msg.new_model = copy.deepcopy(result_model)
+
+            results = self.evaluate_metrics(self.server_msg)
+            aggregated_result = self.aggregation_fn(results)
+            train_metrics = aggregated_result.train_metrics
+            val_metrics = aggregated_result.validation_metrics
+
+            if len(train_history) == 0:
+                for metric, value in train_metrics.items():
+                    train_history[f&#39;train_{metric}&#39;] = [value]
+
+                for metric, value in val_metrics.items():
+                    val_history[f&#39;val_{metric}&#39;] = [value]
+
+            else:
+                for metric, value in train_metrics.items():
+                    train_history[f&#39;train_{metric}&#39;].append(value)
+
+                for metric, value in val_metrics.items():
+                    val_history[f&#39;val_{metric}&#39;].append(value)
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write(
+                    (f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                        f&#39;TRAIN = {metrics_to_string(train_metrics)}\t&#39;
+                        f&#39;VAL = {metrics_to_string(val_metrics)}\n&#39;)
+                )
+
+            if val_metrics[&#39;f1&#39;] &gt; best_val_f1:
+                waiting_epochs = 0
+                self.best_epoch = epoch
+                best_val_f1 = val_metrics[&#39;f1&#39;]
+                ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                                  train_history, val_history)
+                torch.save(ckpt, open((f&#39;{self.checkpoint_best_path}&#39;), &#39;wb&#39;))
+                torch.save(self.extract_model_fn(self.global_model),
+                           (f&#39;{os.path.dirname(self.checkpoint_best_path)}/global_model_{self.n_global_model_updates}.pt&#39;))
+                self.n_global_model_updates += 1
+                del ckpt
+
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write((f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                             f&#39;CHECKPOINT: Better Model Found\n&#39;
+                             ))
+
+            else:
+                waiting_epochs += 1
+                if waiting_epochs % self.patience == 0:
+                    early_stop = True
+                    with open(self.log_file, &#39;a&#39;) as f:
+                        f.write((f&#39;{datetime.datetime.now()}:&#39;
+                                 &#39;EARLY STOPPING\n&#39;
+                                 ))
+
+            if epoch % self.epoch2ckpt == 0:
+                ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                                  train_history, val_history)
+
+                torch.save(ckpt, open((f&#39;{self.checkpoint_epoch_path}&#39;), &#39;wb&#39;))
+
+                del ckpt
+
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write((f&#39;{datetime.datetime.now()}:&#39;
+                             f&#39; Epoch {epoch + 1}: &#39;
+                             f&#39;CHECKPOINT: Passed &#39;
+                             f&#39;{self.epoch2ckpt} epochs\n&#39;
+                             ))
+            epoch += 1
+
+        ckpt = torch.load(open((f&#39;{self.checkpoint_best_path}&#39;), &#39;rb&#39;))
+        best_model = ckpt.model
+        best_train_history = ckpt.train_metrics
+        best_val_history = ckpt.val_metrics
+        self.global_model = self.init_model_fn(self.global_model, best_model)
+        torch.save(self.global_model,
+                   f&#39;{os.path.dirname(self.checkpoint_best_path)}/global_model.h5&#39;)
+        del ckpt
+        return best_train_history, best_val_history
+
+    def _extend_history(self, history_list):
+        max_len = 0
+        for history in history_list:
+            max_len = max(max_len, len(history))
+
+        mean_hist = np.zeros((len(history_list), max_len))
+        for i, history in enumerate(history_list):
+            mean_hist[i, :len(history)] = history
+            mean_hist[i, len(history):] = history[-1]
+
+        mean_hist = np.round(np.mean(mean_hist, axis=0), 3)
+        return mean_hist
+
+    def execute(self):
+        &#34;&#34;&#34;
+        ## Description:
+
+        The main entry point of HOLDA.
+        The function starts the whole training process of HOLDA.
+
+        ## Returns:
+
+        `(train_history, val_history) : (dict,dict)`
+        The history with the scores about the metrics considered, computed on the training and validation data, respectively.
+        A general entry of the dictionary is &#34;{&#39;metric_name&#39;: [v_1,v_2,...v_k]}&#34;
+
+        NOTE:
+            The k-foldCV process has still to be tested!
+
+        &#34;&#34;&#34;
+        if isinstance(self.validation_msg, CV_ValidationMessage):
+            total_folds = self.validation_msg.total_folds
+
+            train_folds_hist = {}
+            val_folds_hist = {}
+
+            for fold in range(self.validation_msg.total_folds):
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write(f&#39;Starting Fold {fold+1} / {total_folds}\n&#39;)
+
+                self.validation_msg.current_fold = fold
+
+                train_history, val_history = self.federated_training()
+
+                current_train_result = {}
+                current_val_result = {}
+
+                for metric, values in train_history.items():
+                    current_train_result[metric] = values[-1]
+                    if fold == 0:
+                        train_folds_hist[metric] = [values]
+
+                    else:
+                        train_folds_hist[metric].append(values)
+
+                for metric, values in val_history.items():
+                    current_val_result[metric] = values[-1]
+                    if fold == 0:
+                        val_folds_hist[metric] = [values]
+                    else:
+                        val_folds_hist[metric].append(values)
+
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write((f&#39;{datetime.datetime.now()}: &#39;
+                             f&#39;Ended Fold {fold+1} / {total_folds}: &#39;
+                             f&#39;TRAIN = &#39;
+                             f&#39;{metrics_to_string(current_train_result)}\t&#39;
+                             f&#39;VAL = &#39;
+                             f&#39;{metrics_to_string(current_val_result)}\n\n&#39;))
+
+            # Ho terminato di esaminare tutti i folds
+            for metric, values in train_folds_hist.items():
+                train_folds_hist[metric] = self._extend_history(
+                    train_folds_hist[metric])
+
+            for metric, values in val_folds_hist.items():
+                val_folds_hist[metric] = self._extend_history(
+                    val_folds_hist[metric])
+
+            train_cv_result = {}
+            val_cv_result = {}
+
+            for metric, values in train_folds_hist.items():
+                train_cv_result[metric] = values[-1]
+            for metric, values in val_folds_hist.items():
+                val_cv_result[metric] = values[-1]
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}: &#39;
+                         f&#39;Ended CV: FINAL RESULTS: &#39;
+                         f&#39;TRAIN = {metrics_to_string(train_cv_result)}\t&#39;
+                         f&#39;VAL = {metrics_to_string(val_cv_result)}\n\n&#39;))
+
+            return train_folds_hist, val_folds_hist
+
+        else:  # hold-out strategy
+
+            train_history, val_history = self.federated_training()
+            train_result = {}
+            val_result = {}
+            for metric, values in train_history.items():
+                train_result[metric] = values[-1]
+            for metric, values in val_history.items():
+                val_result[metric] = values[-1]
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}: &#39;
+                         f&#39;Ended HOLD OUT: FINAL RESULTS: &#39;
+                         f&#39;TRAIN = {metrics_to_string(train_result)}\t&#39;
+                         f&#39;VAL = {metrics_to_string(val_result)}\n\n&#39;))
+
+            return train_history, val_history
+
+    def shutdown(self):
+        &#34;&#34;&#34;
+        It starts the shutdown phase, which frees the resources and closes the federation.
+        &#34;&#34;&#34;
+        handlers = [child.shutdown.remote()
+                    for child in self.children_list]
+        for handler in handlers:
+            ray.get(handler)
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write((f&#39;{datetime.datetime.now()}: &#39;
+                     f&#39;Shutdown completed\n&#39;))</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="HOLDA.buildingBlocks.server.Server.broadcast_train_msg"><code class="name flex">
+<span>def <span class="ident">broadcast_train_msg</span></span>(<span>self, message)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="description">Description:</h2>
+<p>It trasmits the message stored in <code>message</code> to all its selected children.</p>
+<h2 id="args">Args:</h2>
+<p><code>message</code> : (ServerMessage)
+The message to be transmitted to the children</p>
+<h2 id="returns">Returns:</h2>
+<p><code>handlers</code> : (list of Future)
+A list containing the handlers needed to get back the result of the computation performed by each child.
+The length of the list is equal to the number of selected children.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def broadcast_train_msg(self, message):
+    &#34;&#34;&#34;
+    ## Description:
+
+    It trasmits the message stored in `message` to all its selected children.
+
+    ## Args:
+
+    `message` : (ServerMessage)
+        The message to be transmitted to the children
+
+    ## Returns:
+
+    `handlers` : (list of Future)
+        A list containing the handlers needed to get back the result of the computation performed by each child.
+        The length of the list is equal to the number of selected children.   
+    &#34;&#34;&#34;
+    handlers = []
+    for child in self.selected_children:
+        handlers.append(child.broadcast_train_msg.remote(
+            message))
+    return handlers</code></pre>
+</details>
+</dd>
+<dt id="HOLDA.buildingBlocks.server.Server.eval_on_test"><code class="name flex">
+<span>def <span class="ident">eval_on_test</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="description">Description:</h2>
+<p>It evaluates the model described in <span><span class="MathJax_Preview">starting\_model</span><script type="math/tex">starting\_model</script></span> on the test or validation set.</p>
+<h2 id="returns">Returns:</h2>
+<p><span><span class="MathJax_Preview">train\_metrics, val\_metrics</span><script type="math/tex">train\_metrics, val\_metrics</script></span>: (dict,dict)
+The evaluation scores obtained by the model on the training and validation data.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def eval_on_test(self):
+    &#34;&#34;&#34;
+    ## Description:
+
+    It evaluates the model described in \(starting\_model\) on the test or validation set.
+
+    ## Returns:
+    \(train\_metrics, val\_metrics\): (dict,dict)
+        The evaluation scores obtained by the model on the training and validation data.
+
+    &#34;&#34;&#34;
+    self.global_model = self.starting_model
+    self.server_msg = ServerMessage(
+        new_model=copy.deepcopy(self.global_model.state_dict()),
+        validation_msg=self.validation_msg,
+        send_deltas=self.use_deltas,
+        target_label=self.target_label)
+
+    results = self.evaluate_metrics(self.server_msg)
+    aggregated_result = self.aggregation_fn(results)
+    train_metrics = aggregated_result.train_metrics
+    val_metrics = aggregated_result.validation_metrics
+    return train_metrics, val_metrics</code></pre>
+</details>
+</dd>
+<dt id="HOLDA.buildingBlocks.server.Server.evaluate_metrics"><code class="name flex">
+<span>def <span class="ident">evaluate_metrics</span></span>(<span>self, message)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="description">Description:</h2>
+<p>It evaluates the model stored in <code>message</code> according to the predefined metrics.
+The message is transmitted to every child node.</p>
+<h2 id="args">Args:</h2>
+<p><code>message</code> : (ServerMessage)
+The message to be transmitted to the children</p>
+<h2 id="returns">Returns:</h2>
+<p><code>handlers</code> : (list of Future)
+A list containing the handlers needed to get back the result of the computation performed by each child.
+The length of the list is equal to the number of children.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def evaluate_metrics(self, message):
+    &#34;&#34;&#34;
+    ## Description:
+
+    It evaluates the model stored in `message` according to the predefined metrics.
+    The message is transmitted to every child node.
+
+    ## Args:
+
+    `message` : (ServerMessage)
+        The message to be transmitted to the children
+
+    ## Returns:
+
+    `handlers` : (list of Future)
+        A list containing the handlers needed to get back the result of the computation performed by each child.
+        The length of the list is equal to the number of children.   
+    &#34;&#34;&#34;
+    handlers = []
+    for child in self.children_list:
+        handlers.append(child.evaluate_metrics.remote(
+            message))
+    return handlers</code></pre>
+</details>
+</dd>
+<dt id="HOLDA.buildingBlocks.server.Server.execute"><code class="name flex">
+<span>def <span class="ident">execute</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="description">Description:</h2>
+<p>The main entry point of HOLDA.
+The function starts the whole training process of HOLDA.</p>
+<h2 id="returns">Returns:</h2>
+<p><code>(train_history, val_history) : (dict,dict)</code>
+The history with the scores about the metrics considered, computed on the training and validation data, respectively.
+A general entry of the dictionary is "{'metric_name': [v_1,v_2,&hellip;v_k]}"</p>
+<h2 id="note">Note</h2>
+<p>The k-foldCV process has still to be tested!</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def execute(self):
+    &#34;&#34;&#34;
+    ## Description:
+
+    The main entry point of HOLDA.
+    The function starts the whole training process of HOLDA.
+
+    ## Returns:
+
+    `(train_history, val_history) : (dict,dict)`
+    The history with the scores about the metrics considered, computed on the training and validation data, respectively.
+    A general entry of the dictionary is &#34;{&#39;metric_name&#39;: [v_1,v_2,...v_k]}&#34;
+
+    NOTE:
+        The k-foldCV process has still to be tested!
+
+    &#34;&#34;&#34;
+    if isinstance(self.validation_msg, CV_ValidationMessage):
+        total_folds = self.validation_msg.total_folds
+
+        train_folds_hist = {}
+        val_folds_hist = {}
+
+        for fold in range(self.validation_msg.total_folds):
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write(f&#39;Starting Fold {fold+1} / {total_folds}\n&#39;)
+
+            self.validation_msg.current_fold = fold
+
+            train_history, val_history = self.federated_training()
+
+            current_train_result = {}
+            current_val_result = {}
+
+            for metric, values in train_history.items():
+                current_train_result[metric] = values[-1]
+                if fold == 0:
+                    train_folds_hist[metric] = [values]
+
+                else:
+                    train_folds_hist[metric].append(values)
+
+            for metric, values in val_history.items():
+                current_val_result[metric] = values[-1]
+                if fold == 0:
+                    val_folds_hist[metric] = [values]
+                else:
+                    val_folds_hist[metric].append(values)
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}: &#39;
+                         f&#39;Ended Fold {fold+1} / {total_folds}: &#39;
+                         f&#39;TRAIN = &#39;
+                         f&#39;{metrics_to_string(current_train_result)}\t&#39;
+                         f&#39;VAL = &#39;
+                         f&#39;{metrics_to_string(current_val_result)}\n\n&#39;))
+
+        # Ho terminato di esaminare tutti i folds
+        for metric, values in train_folds_hist.items():
+            train_folds_hist[metric] = self._extend_history(
+                train_folds_hist[metric])
+
+        for metric, values in val_folds_hist.items():
+            val_folds_hist[metric] = self._extend_history(
+                val_folds_hist[metric])
+
+        train_cv_result = {}
+        val_cv_result = {}
+
+        for metric, values in train_folds_hist.items():
+            train_cv_result[metric] = values[-1]
+        for metric, values in val_folds_hist.items():
+            val_cv_result[metric] = values[-1]
+
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write((f&#39;{datetime.datetime.now()}: &#39;
+                     f&#39;Ended CV: FINAL RESULTS: &#39;
+                     f&#39;TRAIN = {metrics_to_string(train_cv_result)}\t&#39;
+                     f&#39;VAL = {metrics_to_string(val_cv_result)}\n\n&#39;))
+
+        return train_folds_hist, val_folds_hist
+
+    else:  # hold-out strategy
+
+        train_history, val_history = self.federated_training()
+        train_result = {}
+        val_result = {}
+        for metric, values in train_history.items():
+            train_result[metric] = values[-1]
+        for metric, values in val_history.items():
+            val_result[metric] = values[-1]
+
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write((f&#39;{datetime.datetime.now()}: &#39;
+                     f&#39;Ended HOLD OUT: FINAL RESULTS: &#39;
+                     f&#39;TRAIN = {metrics_to_string(train_result)}\t&#39;
+                     f&#39;VAL = {metrics_to_string(val_result)}\n\n&#39;))
+
+        return train_history, val_history</code></pre>
+</details>
+</dd>
+<dt id="HOLDA.buildingBlocks.server.Server.federated_training"><code class="name flex">
+<span>def <span class="ident">federated_training</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="description">Description:</h2>
+<p>It executes the full training algorithm, i.e. HOLDA, on the selected training and validation data.</p>
+<h2 id="returns">Returns:</h2>
+<p><span><span class="MathJax_Preview">best\_train\_history, best\_val\_history</span><script type="math/tex">best\_train\_history, best\_val\_history</script></span> : (list, list)
+The training and validation history of each considered metric during the overall training process.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def federated_training(self):
+    &#34;&#34;&#34;
+    ## Description:
+
+    It executes the full training algorithm, i.e. HOLDA, on the selected training and validation data.
+
+    ## Returns:
+
+    \(best\_train\_history, best\_val\_history\) : (list, list)
+        The training and validation history of each considered metric during the overall training process.
+    &#34;&#34;&#34;
+    if self.from_check:
+        ckpt = torch.load(open((f&#39;{self.checkpoint_best_path}&#39;
+                                ), &#39;rb&#39;))
+
+        train_history = ckpt.train_metrics
+        val_history = ckpt.val_metrics
+        best_val_f1 = ckpt.val_metrics[&#39;val_f1&#39;][-1]
+        self.global_model = self.hyperparams.build_model_fn()
+        self.global_model.load_state_dict(ckpt.model)
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write(
+                f&#39;{datetime.datetime.now()}: RESTART FROM THE LAST CHECKPOINT\n&#39;)
+        epoch = len(val_history[&#39;val_f1&#39;])
+        self.best_epoch = epoch
+        print(&#39;BEST F1: &#39;, best_val_f1)
+    else:
+        train_history = {}
+        val_history = {}
+        best_val_f1 = -float(&#39;inf&#39;)
+        self.global_model = self.hyperparams.build_model_fn()
+        epoch = 0
+        self.best_epoch = 0
+
+    if self.starting_model:
+        self.global_model = self.starting_model
+
+    waiting_epochs = 0
+    early_stop = False
+
+    self.server_msg = ServerMessage(
+        new_model=copy.deepcopy(self.global_model.state_dict()),
+        validation_msg=self.validation_msg,
+        send_deltas=self.use_deltas,
+        target_label=self.target_label)
+
+    self.server_msg.new_model = copy.deepcopy(
+        self.global_model.state_dict())
+
+    results = self.evaluate_metrics(self.server_msg)
+    aggregated_result = self.aggregation_fn(results)
+    train_metrics = aggregated_result.train_metrics
+    val_metrics = aggregated_result.validation_metrics
+
+    for metric, value in train_metrics.items():
+        train_history[f&#39;train_{metric}&#39;] = [value]
+
+    for metric, value in val_metrics.items():
+        val_history[f&#39;val_{metric}&#39;] = [value]
+
+    with open(self.log_file, &#39;a&#39;) as f:
+        f.write(
+            (f&#39;{datetime.datetime.now()}: Epoch 0: &#39;
+             f&#39;TRAIN = {metrics_to_string(train_metrics)}\t&#39;
+             f&#39;VAL = {metrics_to_string(val_metrics)}\n&#39;)
+        )
+
+    if val_metrics[&#39;f1&#39;] &gt; best_val_f1:
+        self.best_epoch = epoch
+        best_val_f1 = val_metrics[&#39;f1&#39;]
+        ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                          train_history, val_history)
+        torch.save(ckpt, open((f&#39;{self.checkpoint_best_path}&#39;), &#39;wb&#39;))
+        del ckpt
+
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write((f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                     f&#39;CHECKPOINT: Better Model Found\n&#39;
+                     ))
+
+    while (not early_stop) and (epoch &lt; self.global_epochs):
+        self._sample_children(sample_size=self.sample_size)
+        results = self.broadcast_train_msg(self.server_msg)
+
+        aggregated_result = self.aggregation_fn(results)
+
+        new_model = aggregated_result.new_model
+
+        result_model = copy.deepcopy(new_model)
+
+        if self.use_deltas:
+            for key, value in self.global_model.state_dict().items():
+                result_model[key] = result_model[key] + value
+
+        self.global_model.load_state_dict(result_model)
+        self.server_msg.new_model = copy.deepcopy(result_model)
+
+        results = self.evaluate_metrics(self.server_msg)
+        aggregated_result = self.aggregation_fn(results)
+        train_metrics = aggregated_result.train_metrics
+        val_metrics = aggregated_result.validation_metrics
+
+        if len(train_history) == 0:
+            for metric, value in train_metrics.items():
+                train_history[f&#39;train_{metric}&#39;] = [value]
+
+            for metric, value in val_metrics.items():
+                val_history[f&#39;val_{metric}&#39;] = [value]
+
+        else:
+            for metric, value in train_metrics.items():
+                train_history[f&#39;train_{metric}&#39;].append(value)
+
+            for metric, value in val_metrics.items():
+                val_history[f&#39;val_{metric}&#39;].append(value)
+
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write(
+                (f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                    f&#39;TRAIN = {metrics_to_string(train_metrics)}\t&#39;
+                    f&#39;VAL = {metrics_to_string(val_metrics)}\n&#39;)
+            )
+
+        if val_metrics[&#39;f1&#39;] &gt; best_val_f1:
+            waiting_epochs = 0
+            self.best_epoch = epoch
+            best_val_f1 = val_metrics[&#39;f1&#39;]
+            ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                              train_history, val_history)
+            torch.save(ckpt, open((f&#39;{self.checkpoint_best_path}&#39;), &#39;wb&#39;))
+            torch.save(self.extract_model_fn(self.global_model),
+                       (f&#39;{os.path.dirname(self.checkpoint_best_path)}/global_model_{self.n_global_model_updates}.pt&#39;))
+            self.n_global_model_updates += 1
+            del ckpt
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}: Epoch {epoch + 1}: &#39;
+                         f&#39;CHECKPOINT: Better Model Found\n&#39;
+                         ))
+
+        else:
+            waiting_epochs += 1
+            if waiting_epochs % self.patience == 0:
+                early_stop = True
+                with open(self.log_file, &#39;a&#39;) as f:
+                    f.write((f&#39;{datetime.datetime.now()}:&#39;
+                             &#39;EARLY STOPPING\n&#39;
+                             ))
+
+        if epoch % self.epoch2ckpt == 0:
+            ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                              train_history, val_history)
+
+            torch.save(ckpt, open((f&#39;{self.checkpoint_epoch_path}&#39;), &#39;wb&#39;))
+
+            del ckpt
+
+            with open(self.log_file, &#39;a&#39;) as f:
+                f.write((f&#39;{datetime.datetime.now()}:&#39;
+                         f&#39; Epoch {epoch + 1}: &#39;
+                         f&#39;CHECKPOINT: Passed &#39;
+                         f&#39;{self.epoch2ckpt} epochs\n&#39;
+                         ))
+        epoch += 1
+
+    ckpt = torch.load(open((f&#39;{self.checkpoint_best_path}&#39;), &#39;rb&#39;))
+    best_model = ckpt.model
+    best_train_history = ckpt.train_metrics
+    best_val_history = ckpt.val_metrics
+    self.global_model = self.init_model_fn(self.global_model, best_model)
+    torch.save(self.global_model,
+               f&#39;{os.path.dirname(self.checkpoint_best_path)}/global_model.h5&#39;)
+    del ckpt
+    return best_train_history, best_val_history</code></pre>
+</details>
+</dd>
+<dt id="HOLDA.buildingBlocks.server.Server.get_weights"><code class="name flex">
+<span>def <span class="ident">get_weights</span></span>(<span>self, message)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="description">Description:</h2>
+<p>It computes the weights, i.e. the total number of records in the training and validation data.</p>
+<h2 id="args">Args:</h2>
+<p><code>message</code>: (ValidationMessage)
+A message containg the validation strategy that has to be perfomed, i.e k-foldCV or Hold-Out</p>
+<h2 id="returns">Returns:</h2>
+<p><span><span class="MathJax_Preview">train\_weights,val\_weights</span><script type="math/tex">train\_weights,val\_weights</script></span>: (float, float)
+The weights associated to the training and validation data.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_weights(self, message):
+    &#34;&#34;&#34;
+    ## Description:
+
+    It computes the weights, i.e. the total number of records in the training and validation data.
+
+    ## Args:
+
+    `message`: (ValidationMessage)
+        A message containg the validation strategy that has to be perfomed, i.e k-foldCV or Hold-Out
+
+    ## Returns:
+
+    \(train\_weights,val\_weights\): (float, float)
+        The weights associated to the training and validation data.
+    &#34;&#34;&#34;
+    train_weights = 0
+    val_weights = 0
+    handlers = [child.get_weights.remote(
+        message) for child in self.selected_children]
+    for handler in handlers:
+        train_weight, val_weight = ray.get(handler)
+        with open(self.log_file, &#39;a&#39;) as f:
+            f.write(
+                f&#39;{datetime.datetime.now()}: Get_Weights: &#39;
+                f&#39;Ricevuto: Training = {train_weight} &#39;
+                f&#39;Validation = {val_weight}\n&#39;)
+        train_weights += train_weight
+        val_weights += val_weight
+
+    with open(self.log_file, &#39;a&#39;) as f:
+        f.write(f&#39;{datetime.datetime.now()}: Get_Weights: Pesi totali: &#39;
+                f&#39;Training = {train_weights} &#39;
+                f&#39;Validation = {val_weights}\n&#39;)
+    return train_weights, val_weights</code></pre>
+</details>
+</dd>
+<dt id="HOLDA.buildingBlocks.server.Server.init_computation"><code class="name flex">
+<span>def <span class="ident">init_computation</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="description">Description:</h2>
+<p>It initializes the overall computation by calculating the training and validation weights.</p>
+<p>NOTE:
+It isn't necessary if the children are sampled at the beginning of each training round!</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_computation(self):
+    &#34;&#34;&#34;
+    ## Description:
+
+    It initializes the overall computation by calculating the training and validation weights.
+
+    NOTE:
+    It isn&#39;t necessary if the children are sampled at the beginning of each training round!
+    &#34;&#34;&#34;
+    self.total_train_weights, self.total_val_weights = self.get_weights(
+        self.validation_msg)</code></pre>
+</details>
+</dd>
+<dt id="HOLDA.buildingBlocks.server.Server.shutdown"><code class="name flex">
+<span>def <span class="ident">shutdown</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It starts the shutdown phase, which frees the resources and closes the federation.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def shutdown(self):
+    &#34;&#34;&#34;
+    It starts the shutdown phase, which frees the resources and closes the federation.
+    &#34;&#34;&#34;
+    handlers = [child.shutdown.remote()
+                for child in self.children_list]
+    for handler in handlers:
+        ray.get(handler)
+    with open(self.log_file, &#39;a&#39;) as f:
+        f.write((f&#39;{datetime.datetime.now()}: &#39;
+                 f&#39;Shutdown completed\n&#39;))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="HOLDA.buildingBlocks" href="index.html">HOLDA.buildingBlocks</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="HOLDA.buildingBlocks.server.Server" href="#HOLDA.buildingBlocks.server.Server">Server</a></code></h4>
+<ul class="two-column">
+<li><code><a title="HOLDA.buildingBlocks.server.Server.broadcast_train_msg" href="#HOLDA.buildingBlocks.server.Server.broadcast_train_msg">broadcast_train_msg</a></code></li>
+<li><code><a title="HOLDA.buildingBlocks.server.Server.eval_on_test" href="#HOLDA.buildingBlocks.server.Server.eval_on_test">eval_on_test</a></code></li>
+<li><code><a title="HOLDA.buildingBlocks.server.Server.evaluate_metrics" href="#HOLDA.buildingBlocks.server.Server.evaluate_metrics">evaluate_metrics</a></code></li>
+<li><code><a title="HOLDA.buildingBlocks.server.Server.execute" href="#HOLDA.buildingBlocks.server.Server.execute">execute</a></code></li>
+<li><code><a title="HOLDA.buildingBlocks.server.Server.federated_training" href="#HOLDA.buildingBlocks.server.Server.federated_training">federated_training</a></code></li>
+<li><code><a title="HOLDA.buildingBlocks.server.Server.get_weights" href="#HOLDA.buildingBlocks.server.Server.get_weights">get_weights</a></code></li>
+<li><code><a title="HOLDA.buildingBlocks.server.Server.init_computation" href="#HOLDA.buildingBlocks.server.Server.init_computation">init_computation</a></code></li>
+<li><code><a title="HOLDA.buildingBlocks.server.Server.shutdown" href="#HOLDA.buildingBlocks.server.Server.shutdown">shutdown</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

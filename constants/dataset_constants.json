@@ -1,0 +1,27 @@
+{
+    "Numerical_Attributes": ["PRIVATE_AMOUNT",
+        "SEMI_PRIVATE_AMOUNT", "WARD_AMOUNT",
+        "CCU_AMOUNT", "OTHER_AMOUNT", "PHARM_AMOUNT",
+        "MEDSURG_AMOUNT", "DME_AMOUNT", "USED_DME_AMOUNT",
+        "PT_AMOUNT", "OT_AMOUNT",
+        "SPEECH_AMOUNT", "IT_AMOUNT", "BLOOD_AMOUNT",
+        "OR_AMOUNT", "LITH_AMOUNT", "CARD_AMOUNT", "ANES_AMOUNT",
+        "LAB_AMOUNT", "RAD_AMOUNT", "MRI_AMOUNT", "OP_AMOUNT",
+        "ER_AMOUNT", "AMBULANCE_AMOUNT", "PRO_FEE_AMOUNT", "ORGAN_AMOUNT",
+        "ESRD_AMOUNT", "CLINIC_AMOUNT", "TOTAL_CHARGES", "TOTAL_NON_COV_CHARGES",
+        "TOTAL_CHARGES_ACCOMM", "TOTAL_NON_COV_CHARGES_ACCOMM", "TOTAL_CHARGES_ANCIL",
+        "TOTAL_NON_COV_CHARGES_ANCIL", "LENGTH_OF_STAY"
+    ],
+
+    "Target_Label": "PRINC_SURG_PROC_CODE",
+    "Labels_To_Drop": ["RECORD_ID"],
+    "All_classes": 100,
+    "Pruned_classes_michele": 77,
+    "Pruned_classes_francesca": 52,
+    "Pruned_classes_tradeoff": 61,
+    "Number_Features": 85,
+    "LORE_base_path": "./LORE_ext-master",
+    "LORE_code_path": "./LORE_ext-master/lore",
+    "Mobility_Classes": 6,
+    "Mobility_Attributes": 22
+}
