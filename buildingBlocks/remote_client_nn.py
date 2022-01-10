@@ -322,6 +322,7 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                 result_model[key] = result_model[key] - value
 
         base_log_dir = os.path.dirname(self.log_path)
+
         for metric in ['loss', 'precision', 'recall', 'f1']:
             pkl.dump(train_history[metric][:best_epoch+1],
                      file=open(f'{base_log_dir}/{self.id}_train_{metric}_hist.pkl', 'wb'))
@@ -395,7 +396,9 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
         if val_metrics['f1'] > self.state_best_f1:
             self.state_best_f1 = val_metrics['f1']
-            torch.save(server_message.new_model,
+            chkpoint = CheckPoint(
+                server_message.new_model, train_metrics, val_metrics)
+            torch.save(chkpoint,
                        (self.ckpt_best))
 
         with open(self.log_path, 'a') as f:
