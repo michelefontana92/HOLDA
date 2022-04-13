@@ -1,20 +1,22 @@
+from re import S
 import ray
 import torch
 from utils.messages import CV_ValidationMessage, HoldOut_ValidationMessage
 from utils.messages import ServerMessage
 import datetime
 from utils.metrics_sklearn import metrics_to_string
-from metadata.meta import CheckPoint
+from metadata.meta import CheckPoint, CheckPoint
 import numpy as np
 import copy
 import math
 import os
 from utils.util import create_model_name, create_model_name_state
+import pickle as pkl
 
 
 class Server:
     """
-    ## Description: 
+    # Description:
 
     It represents the central server of the hierarchy.
     It orchestrates the whole training process.
@@ -40,7 +42,9 @@ class Server:
         self.save_state_models = False
         self.save_all_models_path = config.metadata.save_all_models_path
         self.save_state_models_path = config.metadata.save_state_models_path
-
+        self.history_path = f'{os.path.dirname(self.log_file)}/../History'
+        if not os.path.exists(self.history_path):
+            os.makedirs(self.history_path)
         if not config.metadata.save_all_models_path == '':
             path = create_model_name(
                 config.metadata.save_all_models_path, 0, 0)
@@ -101,25 +105,19 @@ class Server:
 
         self.validation_msg = HoldOut_ValidationMessage()
 
-        with open(self.log_file, 'w') as f:
-            f.write(f'{datetime.datetime.now()}: {self.id} ATTIVATO\n')
-            f.write(f'Training: Eseguo {self.global_epochs} epoche globali '
-                    f'Early stopping patience = {self.patience} epoche\n'
-                    f'Training params: {config.training_params}\n')
-            children_id = [ray.get(child.get_id.remote())
-                           for child in self.children_list]
-            f.write(f'Children list : {children_id}\n')
+        self.have_activated_children = False
+        self.config = config
 
     def get_id(self):
         return self.id
 
     def eval_on_test(self):
         """
-        ## Description:
+        # Description:
 
         It evaluates the model described in \(starting\_model\) on the test or validation set.
 
-        ## Returns:
+        # Returns:
         \(train\_metrics, val\_metrics\): (dict,dict)
             The evaluation scores obtained by the model on the training and validation data.
 
@@ -129,7 +127,8 @@ class Server:
             new_model=copy.deepcopy(self.global_model.state_dict()),
             validation_msg=self.validation_msg,
             send_deltas=self.use_deltas,
-            target_label=self.target_label)
+            target_label=self.target_label,
+        )
 
         results = self.evaluate_metrics(self.server_msg)
         aggregated_result = self.aggregation_fn(results)
@@ -139,7 +138,7 @@ class Server:
 
     def init_computation(self):
         """
-        ## Description:
+        # Description:
 
         It initializes the overall computation by calculating the training and validation weights.
 
@@ -151,16 +150,16 @@ class Server:
 
     def get_weights(self, message):
         """
-        ## Description:
+        # Description:
 
         It computes the weights, i.e. the total number of records in the training and validation data.
 
-        ## Args:
+        # Args:
 
         `message`: (ValidationMessage)
             A message containg the validation strategy that has to be perfomed, i.e k-foldCV or Hold-Out
 
-        ## Returns:
+        # Returns:
 
         \(train\_weights,val\_weights\): (float, float)
             The weights associated to the training and validation data.
@@ -187,11 +186,11 @@ class Server:
 
     def _sample_children(self, sample_size):
         """
-        ## Description:
+        # Description:
 
         It randomly samples a fraction \(sample\_size \\in (0,1] \) of its direct children
 
-        ## Args:
+        # Args:
 
         `sample_size`: (float \(\\in (0,1]\))
             The fraction of children to select
@@ -204,22 +203,30 @@ class Server:
             self.selected_children = list(np.random.choice(
                 self.children_list, size=n_samples, replace=False))
 
+    def activate_children(self, mode):
+        handlers = []
+        for child in self.children_list:
+            handlers.append(child.activate.remote(
+                mode))
+        for handler in handlers:
+            ray.get(handler)
+
     def broadcast_train_msg(self, message):
         """
-        ## Description:
+        # Description:
 
         It trasmits the message stored in `message` to all its selected children.
 
-        ## Args:
+        # Args:
 
         `message` : (ServerMessage)
             The message to be transmitted to the children
 
-        ## Returns:
+        # Returns:
 
         `handlers` : (list of Future)
             A list containing the handlers needed to get back the result of the computation performed by each child.
-            The length of the list is equal to the number of selected children.   
+            The length of the list is equal to the number of selected children.
         """
         handlers = []
         for child in self.selected_children:
@@ -229,21 +236,21 @@ class Server:
 
     def evaluate_metrics(self, message):
         """
-        ## Description:
+        # Description:
 
         It evaluates the model stored in `message` according to the predefined metrics.
         The message is transmitted to every child node.
 
-        ## Args:
+        # Args:
 
         `message` : (ServerMessage)
             The message to be transmitted to the children
 
-        ## Returns:
+        # Returns:
 
         `handlers` : (list of Future)
             A list containing the handlers needed to get back the result of the computation performed by each child.
-            The length of the list is equal to the number of children.   
+            The length of the list is equal to the number of children.
         """
         handlers = []
         for child in self.children_list:
@@ -253,13 +260,13 @@ class Server:
 
     def federated_training(self):
         """
-        ## Description:
+        # Description:
 
         It executes the full training algorithm, i.e. HOLDA, on the selected training and validation data.
 
-        ## Returns:
+        # Returns:
 
-        \(best\_train\_history, best\_val\_history\) : (list, list)
+        \(best\_train\_history, best\_val\_history\): (list, list)
             The training and validation history of each considered metric during the overall training process.
         """
         if self.from_check:
@@ -280,6 +287,7 @@ class Server:
         else:
             train_history = {}
             val_history = {}
+
             best_val_f1 = -float('inf')
             self.global_model = self.training_params.build_model_fn()
             epoch = 0
@@ -295,12 +303,14 @@ class Server:
             new_model=copy.deepcopy(self.global_model.state_dict()),
             validation_msg=self.validation_msg,
             send_deltas=self.use_deltas,
-            target_label=self.target_label)
+            target_label=self.target_label
+        )
 
         self.server_msg.new_model = copy.deepcopy(
             self.global_model.state_dict())
 
         results = self.evaluate_metrics(self.server_msg)
+
         aggregated_result = self.aggregation_fn(results)
         train_metrics = aggregated_result.train_metrics
         val_metrics = aggregated_result.validation_metrics
@@ -355,6 +365,7 @@ class Server:
             self.server_msg.new_model = copy.deepcopy(result_model)
 
             results = self.evaluate_metrics(self.server_msg)
+
             aggregated_result = self.aggregation_fn(results)
             train_metrics = aggregated_result.train_metrics
             val_metrics = aggregated_result.validation_metrics
@@ -391,7 +402,8 @@ class Server:
                 self.best_epoch = epoch
                 best_val_f1 = val_metrics['f1']
                 ckpt = CheckPoint(self.extract_model_fn(self.global_model),
-                                  train_history, val_history)
+                                  train_history, val_history,
+                                  )
                 torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
 
                 if self.save_state_models:
@@ -418,7 +430,8 @@ class Server:
 
             if epoch % self.epoch2ckpt == 0:
                 ckpt = CheckPoint(self.extract_model_fn(self.global_model),
-                                  train_history, val_history)
+                                  train_history, val_history,
+                                  )
 
                 torch.save(ckpt, open((f'{self.checkpoint_epoch_path}'), 'wb'))
 
@@ -436,6 +449,7 @@ class Server:
         best_model = ckpt.model
         best_train_history = ckpt.train_metrics
         best_val_history = ckpt.val_metrics
+
         self.global_model = self.init_model_fn(self.global_model, best_model)
         torch.save(self.global_model,
                    f'{os.path.dirname(self.checkpoint_best_path)}/global_model.h5')
@@ -457,14 +471,14 @@ class Server:
 
     def execute(self):
         """
-        ## Description:
+        # Description:
 
         The main entry point of HOLDA.
         The function starts the whole training process of HOLDA.
 
-        ## Returns:
+        # Returns:
 
-        `(train_history, val_history) : (dict,dict)`
+        `(train_history, val_history): (dict, dict)`
         The history with the scores about the metrics considered, computed on the training and validation data, respectively.
         A general entry of the dictionary is "{'metric_name': [v_1,v_2,...v_k]}"
 
@@ -472,6 +486,17 @@ class Server:
             The k-foldCV process has still to be tested!
 
         """
+        with open(self.log_file, 'w') as f:
+            f.write(f'{datetime.datetime.now()}: {self.id} ATTIVATO\n')
+            f.write(f'Training: Eseguo {self.global_epochs} epoche globali '
+                    f'Early stopping patience = {self.patience} epoche\n'
+                    f'Training params: {self.config.training_params}\n')
+            children_id = [ray.get(child.get_id.remote())
+                           for child in self.children_list]
+            f.write(f'Children list : {children_id}\n')
+
+        self.activate_children('w')
+        self.have_activated_children = True
         if isinstance(self.validation_msg, CV_ValidationMessage):
             total_folds = self.validation_msg.total_folds
 
@@ -555,6 +580,27 @@ class Server:
 
             return train_history, val_history
 
+    def personalize(self):
+        with open(self.log_file, 'a') as f:
+            f.write(
+                f'\n\n{datetime.datetime.now()}: '
+                f'Starting the personalization phase!\n')
+        if not self.have_activated_children:
+            self.activate_children('a')
+            self.global_model = self.training_params.build_model_fn()
+            self.server_msg = ServerMessage(
+                new_model=copy.deepcopy(self.global_model.state_dict()),
+                validation_msg=self.validation_msg,
+                send_deltas=self.use_deltas,
+                target_label=self.target_label
+            )
+
+        handlers = [child.personalize.remote(self.server_msg)
+                    for child in self.children_list]
+        for handler in handlers:
+            ray.get(handler)
+        return
+
     def shutdown(self):
         """
         It starts the shutdown phase, which frees the resources and closes the federation.
@@ -569,8 +615,16 @@ class Server:
         val_metrics = {}
         for metric in ckpt.train_metrics.keys():
             train_metrics[metric] = ckpt.train_metrics[metric][-1]
+            pkl.dump(ckpt.train_metrics[metric],
+                     file=open(
+                         f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
+
         for metric in ckpt.val_metrics.keys():
             val_metrics[metric] = ckpt.val_metrics[metric][-1]
+            pkl.dump(ckpt.val_metrics[metric],
+                     file=open(
+                         f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
+
         with open(self.log_file, 'a') as f:
             f.write('\n')
             f.write(200*'-')
@@ -578,6 +632,8 @@ class Server:
             f.write(f'{datetime.datetime.now()}: Starting the shutdown...\n')
             f.write(f'Best model: {metrics_to_string(train_metrics)}\t'
                     f'{metrics_to_string(val_metrics)}\n')
+            f.write(200*'-')
+            f.write('\n')
             f.write(200*'-')
             f.write('\n')
             f.write((f'{datetime.datetime.now()}: '

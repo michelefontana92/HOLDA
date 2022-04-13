@@ -1,3 +1,4 @@
+from nntplib import GroupInfo
 import attr
 
 
@@ -37,6 +38,12 @@ class ServerMessage:
     validation_msg = attr.ib()
     send_deltas = attr.ib()
     target_label = attr.ib()
+
+
+@attr.s(eq=False, frozen=False, slots=True)
+class AckMessage:
+    status = attr.ib(default=0)
+    error = attr.ib(default='')
 
 
 @attr.s(eq=False, frozen=False, slots=True)

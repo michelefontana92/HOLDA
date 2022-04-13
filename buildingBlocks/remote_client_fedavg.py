@@ -2,7 +2,7 @@ from buildingBlocks.remote_client import RemoteLocalClient
 from utils.data_loaders import create_data_loader
 import torch.nn as nn
 import torch
-from utils.messages import CV_ValidationMessage, ClientMessage
+from utils.messages import CV_ValidationMessage, FairnessClientMessage
 from utils.messages import ClientMessage
 import datetime
 from utils.metrics_sklearn import evaluate_metrics, metrics_to_string
@@ -18,7 +18,7 @@ from utils.util import create_model_name, create_model_name_monitor, create_mode
 
 
 @ray.remote(num_cpus=1)
-class RemoteLocalClient_NN(RemoteLocalClient):
+class RemoteLocalClient_FedAvg(RemoteLocalClient):
     """
     # Description:
 
@@ -226,7 +226,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             val_set, server_message.target_label, self.batch_size, shuffle=True)
 
         epoch = 0
-        best_epoch = 0
 
         while (not early_stopping) and (epoch < self.n_epochs):
             total_loss = 0.0
@@ -267,41 +266,28 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
             val_f1 = val_metrics['f1']
 
-            if self.save_all_models:
-                path = create_model_name(
-                    self.save_all_models_path, self.global_iter_id, epoch)
-                torch.save(self.model.state_dict(), open(path, 'wb'))
-
             if val_f1 > best_val_f1:
                 best_val_f1 = val_f1
                 waiting_epochs = 0
-                best_epoch = epoch
 
-                if val_f1 > self.state_best_f1:
-                    self.state_best_f1 = val_f1
+                for metric, value in train_metrics.items():
+                    self.train_history[metric].append(value)
+                for metric, value in val_metrics.items():
+                    self.val_history[metric].append(value)
 
-                    for metric, value in train_metrics.items():
-                        self.train_history[metric].append(value)
-                    for metric, value in val_metrics.items():
-                        self.val_history[metric].append(value)
+                chkpoint = CheckPoint(
+                    self.model.state_dict(),
+                    train_metrics,
+                    val_metrics,
+                )
+                torch.save(chkpoint, open(
+                    self.ckpt_best, 'wb'))
 
-                    chkpoint = CheckPoint(
-                        self.model.state_dict(),
-                        train_metrics,
-                        val_metrics,
-                    )
-                    torch.save(chkpoint, open(
-                        self.ckpt_best, 'wb'))
-                    if self.save_state_models:
-                        path = create_model_name_state(
-                            self.save_state_models_path, self.state_id)
-                        torch.save(self.model.state_dict(), open(path, 'wb'))
-                        self.state_id += 1
-                    del chkpoint
-                    with open(self.log_path, 'a') as f:
-                        f.write((f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
-                                 f'CHECKPOINT: Better Model Found\n'
-                                 ))
+                del chkpoint
+                with open(self.log_path, 'a') as f:
+                    f.write((f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
+                             f'CHECKPOINT: Better Model Found\n'
+                             ))
 
             else:
                 waiting_epochs += 1
@@ -312,7 +298,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                     self.model.state_dict(),
                     train_metrics,
                     val_metrics,
-
                 )
 
                 torch.save(chkpoint, open(
@@ -415,27 +400,12 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             f.write((f'{datetime.datetime.now()}: Evaluating global model: '
                      f'TRAIN: {metrics_to_string(train_metrics)}\t'
                      f'VL:{metrics_to_string(val_metrics)}\n'))
-        if val_metrics['f1'] > self.state_best_f1:
-            with open(self.log_path, 'a') as f:
-                f.write((f'{datetime.datetime.now()}: '
-                         f'CHECKPOINT: Better Model Found\n'
-                         ))
-            self.state_best_f1 = val_metrics['f1']
-            for metric, value in train_metrics.items():
-                self.train_history[metric].append(value)
-            for metric, value in val_metrics.items():
-                self.val_history[metric].append(value)
-
-            if self.save_state_models:
-                path = create_model_name_state(
-                    self.save_state_models_path, self.state_id)
-                torch.save(self.model.state_dict(), open(path, 'wb'))
-                self.state_id += 1
 
             chkpoint = CheckPoint(
                 self.model.state_dict(),
                 train_metrics,
                 val_metrics,
+
             )
             torch.save(chkpoint,
                        (self.ckpt_best))
@@ -448,6 +418,7 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             len(val_set),
             self._compute_support(train_set, server_message.target_label),
             self._compute_support(val_set, server_message.target_label),
+
         )
         return [client_msg]
 
@@ -460,9 +431,8 @@ class RemoteLocalClient_NN(RemoteLocalClient):
         self.use_weights = self.config.pers_training_params.use_weights
         self.epoch2ckpt = self.config.pers_training_params.epoch2ckpt
 
-        ckpt = torch.load(open(self.ckpt_best, 'rb'))
         self.model = self.build_model_fn()
-        self.model.load_state_dict(copy.deepcopy(ckpt.model))
+        self.model.load_state_dict(copy.deepcopy(server_message.new_model))
 
         self.state_id = 0
         self.optimizer = self.optimizer_fn(self.model.parameters())
@@ -472,9 +442,8 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                 f'\n\n{datetime.datetime.now()}: '
                 f'Personalizzo il miglior modello!\n')
 
-        best_val_f1 = ckpt.val_metrics['f1']
-
         waiting_epochs = 0
+
         early_stopping = False
         train_set = None
         val_set = None
@@ -500,6 +469,41 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             shuffle=True)
 
         epoch = 0
+
+        train_loss, train_metrics = self._evaluate_model(
+            train_loader, compute_loss=True)
+
+        val_loss, val_metrics = self._evaluate_model(
+            val_loader, compute_loss=True)
+
+        train_metrics['loss'] = train_loss
+        val_metrics['loss'] = val_loss
+        best_val_f1 = val_metrics['f1']
+
+        with open(self.log_path, 'a') as f:
+            f.write((f'{datetime.datetime.now()}: Epoch 0: '
+                     f'TRAIN: {metrics_to_string(train_metrics)}\t'
+                     f'VL:{metrics_to_string(val_metrics)}\n'))
+
+        for metric, value in train_metrics.items():
+            self.personalized_train_history[metric].append(value)
+        for metric, value in val_metrics.items():
+            self.personalized_val_history[metric].append(value)
+
+        chkpoint = CheckPoint(
+            self.model.state_dict(),
+            train_metrics,
+            val_metrics,
+        )
+        torch.save(chkpoint, open(
+            self.ckpt_best, 'wb'))
+
+        del chkpoint
+
+        with open(self.log_path, 'a') as f:
+            f.write((f'{datetime.datetime.now()}: Epoch 0: '
+                     f'CHECKPOINT: Better Model Found\n'
+                     ))
 
         while (not early_stopping) and (epoch < self.n_epochs):
             total_loss = 0.0
@@ -540,13 +544,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
             val_f1 = val_metrics['f1']
 
-            if self.save_all_models:
-                path = create_model_name(
-                    self.save_all_models_path,
-                    self.global_iter_id,
-                    True)
-                torch.save(self.model.state_dict(), open(path, 'wb'))
-
             if val_f1 > best_val_f1:
                 best_val_f1 = val_f1
                 waiting_epochs = 0
@@ -559,17 +556,11 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                 chkpoint = CheckPoint(
                     self.model.state_dict(),
                     train_metrics,
-                    val_metrics
+                    val_metrics,
                 )
                 torch.save(chkpoint, open(
                     self.ckpt_best, 'wb'))
-                if self.save_state_models:
-                    path = create_model_name_state(
-                        self.save_state_models_path,
-                        self.state_id,
-                        True)
-                    torch.save(self.model.state_dict(), open(path, 'wb'))
-                    self.state_id += 1
+
                 del chkpoint
                 with open(self.log_path, 'a') as f:
                     f.write((f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
@@ -585,6 +576,7 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                     self.model.state_dict(),
                     train_metrics,
                     val_metrics,
+
                 )
 
                 torch.save(chkpoint, open(

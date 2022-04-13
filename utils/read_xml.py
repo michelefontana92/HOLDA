@@ -1,14 +1,14 @@
 import functools
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from buildingBlocks.remote_client_fedavg import RemoteLocalClient_FedAvg
 from buildingBlocks.remote_client_nn import RemoteLocalClient_NN
 from buildingBlocks.remote_tproxy import RemoteTrustedProxy
 from buildingBlocks.server import Server
 import ray
 from metadata.meta import ClientConfig, HP_Training_Client, HP_Training_Server, Metadata_Client, Metadata_Server, ProxyConfig, ServerConfig
-import time
+
 import inspect
 from importlib import import_module
-import torch
 
 
 def str2bool(string):
@@ -117,19 +117,17 @@ def parse_metrics_tag(tree):
 
 def parse_setting_tag(tree):
     setting_tag = tree.find('setting')
-    result_dict = {}
-    keys = ['use_deltas', 'use_state']
-    try:
-        for setting in setting_tag:
+    result_dict = {'use_deltas': True,
+                   'use_state': True,
+                   'algorithm': 'HOLDA'}
+
+    for setting in setting_tag:
+        if setting.tag == 'algorithm':
+            result_dict[setting.tag] = setting.text
+        else:
             result_dict[setting.tag] = str2bool(setting.text)
+    print(result_dict)
 
-    except TypeError:
-        result_dict['use_deltas'] = True
-        result_dict['use_state'] = True
-
-    for k in keys:
-        if k not in result_dict.keys():
-            result_dict[k] = True
     return result_dict
 
 
@@ -192,11 +190,14 @@ def parse_server_tag(tree, parent):
     result_dict['training'] = training
 
     use_deltas = parse_setting_tag(parent)['use_deltas']
+    algorithm = parse_setting_tag(parent)['algorithm']
     target_label = parse_task_tag(parent)['target']
+
     metadata = result_dict['meta']
     training = result_dict['training']
     server_meta = Metadata_Server(**metadata)
     server_training = HP_Training_Server(**training)
+
     config_dict = {
         'metadata': server_meta,
         'training_params': server_training,
@@ -218,7 +219,7 @@ def parse_server_tag(tree, parent):
             children_list.append(proxy)
 
         elif child.tag == 'client':
-            client = parse_client_tag(child, parent)
+            client = parse_client_tag(child, parent, algorithm)
             num_children += 1
             children_list.append(client)
 
@@ -289,7 +290,7 @@ def parse_proxy_tag(tree, parent):
     return server, num_children
 
 
-def parse_client_tag(tree, parent):
+def parse_client_tag(tree, parent, algorithm):
     result_dict = {}
     for child in tree:
         meta_dict = _parse_children(tree, child.tag)
@@ -298,6 +299,7 @@ def parse_client_tag(tree, parent):
             result_dict[child.tag][key] = value
 
     training = result_dict['training']
+    pers_training = result_dict['pers_training']
     convert_to_int = ['epochs', 'patience', 'epoch2ckpt', 'batch_size']
     convert_to_float = []
     convert_to_bool = ['use_weights']
@@ -308,19 +310,32 @@ def parse_client_tag(tree, parent):
             training[key] = float(value)
         elif key in convert_to_bool:
             training[key] = str2bool(training[key])
+    for key, value in pers_training.items():
+        if key in convert_to_int:
+            pers_training[key] = int(value)
+        elif key in convert_to_float:
+            pers_training[key] = float(value)
+        elif key in convert_to_bool:
+            pers_training[key] = str2bool(training[key])
 
     result_dict['training']['build_model_fn'] = parse_function_tag(
         parent.find('model'), 'model_fn')
     result_dict['training'] = training
+    result_dict['pers_training']['build_model_fn'] = parse_function_tag(
+        parent.find('model'), 'model_fn')
+    result_dict['pers_training'] = pers_training
     result_dict['meta']['metrics'] = parse_metrics_tag(parent)
     result_dict['meta']['n_classes'] = parse_task_tag(parent)['n_classes']
     metadata = result_dict['meta']
     training = result_dict['training']
+
     server_meta = Metadata_Client(**metadata)
     server_training = HP_Training_Client(**training)
+    server_pers_training = HP_Training_Client(**pers_training)
     config_dict = {
         'metadata': server_meta,
-        'training_params': server_training
+        'training_params': server_training,
+        'pers_training_params': server_pers_training
     }
 
     config = ClientConfig(**config_dict)
@@ -329,9 +344,17 @@ def parse_client_tag(tree, parent):
     print('Client Config: ', config)
     print(50*'-')
     print()
-
-    server = functools.partial(
-        RemoteLocalClient_NN.remote, config)
+    print(algorithm)
+    if algorithm.lower() == 'fedavg':
+        print('Using FedAvg')
+        server = functools.partial(
+            RemoteLocalClient_FedAvg.remote, config)
+    elif algorithm.lower() == 'holda':
+        print('Using HOLDA')
+        server = functools.partial(
+            RemoteLocalClient_NN.remote, config)
+    else:
+        raise KeyError('The algoritm should be FedAvg/HOLDA')
     return server
 
 

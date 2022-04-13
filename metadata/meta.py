@@ -1,5 +1,4 @@
 import attr
-import types
 from aggregations.nn_aggregation import aggregate_nn_weighted, extract_model_nn, init_model_nn
 import functools
 import torch.optim as optim
@@ -72,24 +71,6 @@ class Metadata_Server:
 
 
 @attr.s(eq=False, frozen=False, slots=True)
-class ServerConfig:
-    metadata = attr.ib(default=Metadata_Server(),
-                       validator=[attr.validators.instance_of(Metadata_Server)])
-    training_params = attr.ib(default=HP_Training_Server(),
-                              validator=[attr.validators.instance_of(HP_Training_Server)])
-    use_deltas = attr.ib(default=True,
-                         validator=[attr.validators.instance_of(bool)])
-    target_label = attr.ib(default='class',
-                           validator=[attr.validators.instance_of(str)])
-
-
-@attr.s(eq=False, frozen=False, slots=True)
-class ProxyConfig(ServerConfig):
-    use_state = attr.ib(default=True,
-                        validator=[attr.validators.instance_of(bool)])
-
-
-@attr.s(eq=False, frozen=False, slots=True)
 class HP_Training_Client:
     build_model_fn = attr.ib(default=functools.partial(create_net),
                              validator=[attr.validators.instance_of
@@ -138,6 +119,15 @@ class Metadata_Client:
     test_path = attr.ib(default='',
                         validator=[attr.validators.instance_of(str)])
 
+    train_path_orig = attr.ib(default='',
+                              validator=[attr.validators.instance_of(str)])
+
+    val_path_orig = attr.ib(default='',
+                            validator=[attr.validators.instance_of(str)])
+
+    test_path_orig = attr.ib(default='',
+                             validator=[attr.validators.instance_of(str)])
+
     # path where we save all the produced models at each iteration
     save_all_models_path = attr.ib(default='',
                                    validator=[attr.validators.instance_of(str)])
@@ -148,15 +138,37 @@ class Metadata_Client:
 
 
 @ attr.s(eq=False, frozen=False, slots=True)
-class ClientConfig:
-    metadata = attr.ib(default=Metadata_Client(),
-                       validator=[attr.validators.instance_of(Metadata_Client)])
-    training_params = attr.ib(default=HP_Training_Client(),
-                              validator=[attr.validators.instance_of(HP_Training_Client)])
-
-
-@ attr.s(eq=False, frozen=False, slots=True)
 class CheckPoint:
     model = attr.ib()
     train_metrics = attr.ib()
     val_metrics = attr.ib()
+
+
+@ attr.s(eq=False, frozen=False, slots=True)
+class ServerConfig:
+
+    metadata = attr.ib(default=Metadata_Server(),
+                       validator=[attr.validators.instance_of(Metadata_Server)])
+    training_params = attr.ib(default=HP_Training_Server(),
+                              validator=[attr.validators.instance_of(HP_Training_Server)])
+    use_deltas = attr.ib(default=True,
+                         validator=[attr.validators.instance_of(bool)])
+    target_label = attr.ib(default='class',
+                           validator=[attr.validators.instance_of(str)])
+
+
+@attr.s(eq=False, frozen=False, slots=True)
+class ProxyConfig(ServerConfig):
+    use_state = attr.ib(default=True,
+                        validator=[attr.validators.instance_of(bool)])
+
+
+@ attr.s(eq=False, frozen=False, slots=True)
+class ClientConfig:
+    metadata = attr.ib(default=Metadata_Client(),
+                       validator=[attr.validators.instance_of(Metadata_Client)])
+
+    training_params = attr.ib(default=HP_Training_Client(),
+                              validator=[attr.validators.instance_of(HP_Training_Client)])
+    pers_training_params = attr.ib(default=HP_Training_Client(),
+                                   validator=[attr.validators.instance_of(HP_Training_Client)])

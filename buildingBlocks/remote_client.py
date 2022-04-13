@@ -1,6 +1,7 @@
+from grpc import server
 import torch
 from sklearn.model_selection import StratifiedKFold
-from utils.messages import CV_ValidationMessage, HoldOut_ValidationMessage
+from utils.messages import CV_ValidationMessage, ClientMessage, HoldOut_ValidationMessage
 from sklearn.model_selection import StratifiedShuffleSplit
 import datetime
 import pandas as pd
@@ -25,10 +26,21 @@ class RemoteLocalClient:
         self.ckpt_best = config.metadata.ckpt_best
         self.log_path = config.metadata.log_path
         self.metrics = config.metadata.metrics
+        self.train_history = {'loss': []}
+        self.val_history = {'loss': []}
+        self.personalized_train_history = {'loss': []}
+        self.personalized_val_history = {'loss': []}
+        for key in self.metrics.keys():
+            self.train_history[key] = []
+            self.val_history[key] = []
+            self.personalized_train_history[key] = []
+            self.personalized_val_history[key] = []
         self.dataset_path = config.metadata.dev_path
         self.test_set_path = config.metadata.test_path
         self.train_path = config.metadata.train_path
         self.val_path = config.metadata.val_path
+        self.train_path_orig = config.metadata.train_path_orig
+        self.val_path_orig = config.metadata.val_path_orig
 
         self.global_iter_id = 0
         self.state_id = 0
@@ -38,6 +50,11 @@ class RemoteLocalClient:
 
         self.save_all_models_path = config.metadata.save_all_models_path
         self.save_state_models_path = config.metadata.save_state_models_path
+
+        self.history_path = f'{os.path.dirname(self.log_path)}/../History'
+        if not os.path.exists(self.history_path):
+            os.makedirs(self.history_path)
+
         if not config.metadata.save_all_models_path == '':
             path = create_model_name(
                 config.metadata.save_all_models_path, 0, 0)
@@ -71,12 +88,15 @@ class RemoteLocalClient:
         if not (ckpt_epoch_dir == '') and not (os.path.exists(ckpt_epoch_dir)):
             os.makedirs(ckpt_epoch_dir)
 
-        with open(self.log_path, 'w') as f:
+        self.config = config
+
+    def activate(self, mode):
+        with open(self.log_path, mode) as f:
             f.write(
                 f'{datetime.datetime.now()}: '
                 f'Local Client {self.id}: Attivato\n'
-                f'Client Metadata :\n{config.metadata}\n'
-                f'Client Training Params :\n{config.training_params}\n\n')
+                f'Client Metadata :\n{self.config.metadata}\n'
+                f'Client Training Params :\n{self.config.training_params}\n\n')
 
     def get_id(self):
         return self.id
@@ -261,6 +281,9 @@ class RemoteLocalClient:
                      f'Training: {train_weight} '
                      f'Validation: {val_weight}\n'))
         return train_weight, val_weight
+
+    def personalize(self, server_message):
+        raise NotImplementedError('This method is abstract')
 
     def shutdown(self):
         """
