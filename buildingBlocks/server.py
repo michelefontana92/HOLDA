@@ -38,26 +38,10 @@ class Server:
 
         self.global_iter_id = 0
         self.state_id = 0
-        self.save_all_models = False
-        self.save_state_models = False
-        self.save_all_models_path = config.metadata.save_all_models_path
-        self.save_state_models_path = config.metadata.save_state_models_path
+
         self.history_path = f'{os.path.dirname(self.log_file)}/../History'
         if not os.path.exists(self.history_path):
             os.makedirs(self.history_path)
-        if not config.metadata.save_all_models_path == '':
-            path = create_model_name(
-                config.metadata.save_all_models_path, 0, 0)
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-            self.save_all_models = True
-
-        if not config.metadata.save_state_models_path == '':
-            path = create_model_name_state(
-                config.metadata.save_state_models_path, 0)
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-            self.save_state_models = True
 
         self.training_params = config.training_params
         self.global_epochs = self.training_params.epochs
@@ -335,11 +319,6 @@ class Server:
                               train_history, val_history)
             torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
 
-            if self.save_state_models:
-                path = create_model_name(
-                    self.save_state_models_path, 0, epoch)
-                torch.save(self.extract_model_fn(
-                    self.global_model), open(path, 'wb'))
             del ckpt
 
             with open(self.log_file, 'a') as f:
@@ -391,12 +370,6 @@ class Server:
                         f'VAL = {metrics_to_string(val_metrics)}\n')
                 )
 
-            if self.save_all_models:
-                path = create_model_name(
-                    self.save_all_models_path, 0, epoch)
-                torch.save(self.extract_model_fn(
-                    self.global_model), open(path, 'wb'))
-
             if val_metrics['f1'] > best_val_f1:
                 waiting_epochs = 0
                 self.best_epoch = epoch
@@ -405,14 +378,6 @@ class Server:
                                   train_history, val_history,
                                   )
                 torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
-
-                if self.save_state_models:
-                    path = create_model_name_state(
-                        self.save_state_models_path, self.state_id)
-                    torch.save(self.extract_model_fn(
-                        self.global_model), open(path, 'wb'))
-                    self.state_id += 1
-                del ckpt
 
                 with open(self.log_file, 'a') as f:
                     f.write((f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
@@ -456,19 +421,6 @@ class Server:
         del ckpt
         return best_train_history, best_val_history
 
-    def _extend_history(self, history_list):
-        max_len = 0
-        for history in history_list:
-            max_len = max(max_len, len(history))
-
-        mean_hist = np.zeros((len(history_list), max_len))
-        for i, history in enumerate(history_list):
-            mean_hist[i, :len(history)] = history
-            mean_hist[i, len(history):] = history[-1]
-
-        mean_hist = np.round(np.mean(mean_hist, axis=0), 3)
-        return mean_hist
-
     def execute(self):
         """
         # Description:
@@ -482,9 +434,6 @@ class Server:
         The history with the scores about the metrics considered, computed on the training and validation data, respectively.
         A general entry of the dictionary is "{'metric_name': [v_1,v_2,...v_k]}"
 
-        NOTE:
-            The k-foldCV process has still to be tested!
-
         """
         with open(self.log_file, 'w') as f:
             f.write(f'{datetime.datetime.now()}: {self.id} ATTIVATO\n')
@@ -497,88 +446,22 @@ class Server:
 
         self.activate_children('w')
         self.have_activated_children = True
-        if isinstance(self.validation_msg, CV_ValidationMessage):
-            total_folds = self.validation_msg.total_folds
 
-            train_folds_hist = {}
-            val_folds_hist = {}
+        train_history, val_history = self.federated_training()
+        train_result = {}
+        val_result = {}
+        for metric, values in train_history.items():
+            train_result[metric] = values[-1]
+        for metric, values in val_history.items():
+            val_result[metric] = values[-1]
 
-            for fold in range(self.validation_msg.total_folds):
-                with open(self.log_file, 'a') as f:
-                    f.write(f'Starting Fold {fold+1} / {total_folds}\n')
+        with open(self.log_file, 'a') as f:
+            f.write((f'{datetime.datetime.now()}: '
+                     f'Ended HOLD OUT: FINAL RESULTS: '
+                     f'TRAIN = {metrics_to_string(train_result)}\t'
+                     f'VAL = {metrics_to_string(val_result)}\n\n'))
 
-                self.validation_msg.current_fold = fold
-
-                train_history, val_history = self.federated_training()
-
-                current_train_result = {}
-                current_val_result = {}
-
-                for metric, values in train_history.items():
-                    current_train_result[metric] = values[-1]
-                    if fold == 0:
-                        train_folds_hist[metric] = [values]
-
-                    else:
-                        train_folds_hist[metric].append(values)
-
-                for metric, values in val_history.items():
-                    current_val_result[metric] = values[-1]
-                    if fold == 0:
-                        val_folds_hist[metric] = [values]
-                    else:
-                        val_folds_hist[metric].append(values)
-
-                with open(self.log_file, 'a') as f:
-                    f.write((f'{datetime.datetime.now()}: '
-                             f'Ended Fold {fold+1} / {total_folds}: '
-                             f'TRAIN = '
-                             f'{metrics_to_string(current_train_result)}\t'
-                             f'VAL = '
-                             f'{metrics_to_string(current_val_result)}\n\n'))
-
-            # Ho terminato di esaminare tutti i folds
-            for metric, values in train_folds_hist.items():
-                train_folds_hist[metric] = self._extend_history(
-                    train_folds_hist[metric])
-
-            for metric, values in val_folds_hist.items():
-                val_folds_hist[metric] = self._extend_history(
-                    val_folds_hist[metric])
-
-            train_cv_result = {}
-            val_cv_result = {}
-
-            for metric, values in train_folds_hist.items():
-                train_cv_result[metric] = values[-1]
-            for metric, values in val_folds_hist.items():
-                val_cv_result[metric] = values[-1]
-
-            with open(self.log_file, 'a') as f:
-                f.write((f'{datetime.datetime.now()}: '
-                         f'Ended CV: FINAL RESULTS: '
-                         f'TRAIN = {metrics_to_string(train_cv_result)}\t'
-                         f'VAL = {metrics_to_string(val_cv_result)}\n\n'))
-
-            return train_folds_hist, val_folds_hist
-
-        else:  # hold-out strategy
-
-            train_history, val_history = self.federated_training()
-            train_result = {}
-            val_result = {}
-            for metric, values in train_history.items():
-                train_result[metric] = values[-1]
-            for metric, values in val_history.items():
-                val_result[metric] = values[-1]
-
-            with open(self.log_file, 'a') as f:
-                f.write((f'{datetime.datetime.now()}: '
-                         f'Ended HOLD OUT: FINAL RESULTS: '
-                         f'TRAIN = {metrics_to_string(train_result)}\t'
-                         f'VAL = {metrics_to_string(val_result)}\n\n'))
-
-            return train_history, val_history
+        return train_history, val_history
 
     def personalize(self):
         with open(self.log_file, 'a') as f:

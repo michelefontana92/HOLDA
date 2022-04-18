@@ -197,12 +197,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
         train_set, val_set = self._build_train_and_val_set(server_message)
 
-        total_len = 0
-        for key, support in self._compute_support(train_set,
-                                                  server_message.target_label).items():
-            total_len += support
-        # print(total_len, len(train_set))
-        assert total_len == len(train_set)
         with open(self.log_path, 'a') as f:
             f.write(
                 f'{datetime.datetime.now()}: '
@@ -267,11 +261,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
             val_f1 = val_metrics['f1']
 
-            if self.save_all_models:
-                path = create_model_name(
-                    self.save_all_models_path, self.global_iter_id, epoch)
-                torch.save(self.model.state_dict(), open(path, 'wb'))
-
             if val_f1 > best_val_f1:
                 best_val_f1 = val_f1
                 waiting_epochs = 0
@@ -292,11 +281,7 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                     )
                     torch.save(chkpoint, open(
                         self.ckpt_best, 'wb'))
-                    if self.save_state_models:
-                        path = create_model_name_state(
-                            self.save_state_models_path, self.state_id)
-                        torch.save(self.model.state_dict(), open(path, 'wb'))
-                        self.state_id += 1
+
                     del chkpoint
                     with open(self.log_path, 'a') as f:
                         f.write((f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
@@ -352,9 +337,8 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             ckpt.train_metrics,
             ckpt.val_metrics,
             len(train_set),
-            len(val_set),
-            self._compute_support(train_set, server_message.target_label),
-            self._compute_support(val_set, server_message.target_label))
+            len(val_set)
+        )
 
         del ckpt
         train_metrics = client_msg.train_metrics
@@ -426,12 +410,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             for metric, value in val_metrics.items():
                 self.val_history[metric].append(value)
 
-            if self.save_state_models:
-                path = create_model_name_state(
-                    self.save_state_models_path, self.state_id)
-                torch.save(self.model.state_dict(), open(path, 'wb'))
-                self.state_id += 1
-
             chkpoint = CheckPoint(
                 self.model.state_dict(),
                 train_metrics,
@@ -446,8 +424,7 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             val_metrics,
             len(train_set),
             len(val_set),
-            self._compute_support(train_set, server_message.target_label),
-            self._compute_support(val_set, server_message.target_label),
+
         )
         return [client_msg]
 
@@ -540,13 +517,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
             val_f1 = val_metrics['f1']
 
-            if self.save_all_models:
-                path = create_model_name(
-                    self.save_all_models_path,
-                    self.global_iter_id,
-                    True)
-                torch.save(self.model.state_dict(), open(path, 'wb'))
-
             if val_f1 > best_val_f1:
                 best_val_f1 = val_f1
                 waiting_epochs = 0
@@ -563,14 +533,7 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                 )
                 torch.save(chkpoint, open(
                     self.ckpt_best, 'wb'))
-                if self.save_state_models:
-                    path = create_model_name_state(
-                        self.save_state_models_path,
-                        self.state_id,
-                        True)
-                    torch.save(self.model.state_dict(), open(path, 'wb'))
-                    self.state_id += 1
-                del chkpoint
+
                 with open(self.log_path, 'a') as f:
                     f.write((f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
                              f'CHECKPOINT: Better Model Found\n'

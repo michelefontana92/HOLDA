@@ -10,8 +10,6 @@ import os
 from metadata.meta import CheckPoint
 import torch
 
-from utils.util import create_model_name, create_model_name_state
-
 
 @ray.remote(num_cpus=1)
 class RemoteTrustedProxy(Server):
@@ -27,25 +25,39 @@ class RemoteTrustedProxy(Server):
 
     def __init__(self, config, children_list):
         super().__init__(config, children_list)
-        # print(f'[PROXY {self.id}] ATTIVATO!!')
+
         self.epoch = 0
         self.only_eval = True
-        self.send_last_model = config.use_state
 
         if self.from_check:
-            ckpt = torch.load(open((f'{os.path.dirname(self.checkpoint_best_path)}/'
-                                    f'global_{os.path.basename(self.checkpoint_best_path)}'
+            ckpt = torch.load(open((f'{self.checkpoint_best_path}'
                                     ), 'rb'))
-
-            self.train_history = ckpt.train_metrics
-            self.val_history = ckpt.val_metrics
-            self.best_f1 = ckpt.val_metrics['val_f1'][-1]
-            self.epoch = len(ckpt.val_metrics['val_f1'])
+            val_history = ckpt.val_metrics
+            best_val_f1 = ckpt.val_metrics['val_f1'][-1]
+            self.global_model = self.training_params.build_model_fn()
+            self.global_model.load_state_dict(ckpt.model)
+            with open(self.log_file, 'a') as f:
+                f.write(
+                    f'{datetime.datetime.now()}: RESTART FROM THE LAST CHECKPOINT\n')
+            epoch = len(val_history['val_f1'])
+            self.best_epoch = epoch
+            print('BEST F1: ', best_val_f1)
         else:
             self.train_history = {}
             self.val_history = {}
             self.best_f1 = -float('inf')
             self.epoch = 0
+
+    def activate(self, mode):
+        self.activate_children('w')
+        with open(self.log_file, 'w') as f:
+            f.write(f'{datetime.datetime.now()}: {self.id} ACTIVATED\n')
+            f.write(f'Training: I execute {self.global_epochs} global epochs '
+                    f'Early stopping patience = {self.patience} epochs\n'
+                    f'Training params: {self.config.training_params}\n')
+            children_id = [ray.get(child.get_id.remote())
+                           for child in self.children_list]
+            f.write(f'Children list : {children_id}\n')
 
     def broadcast_train_msg(self, message):
         """
@@ -87,9 +99,6 @@ class RemoteTrustedProxy(Server):
             target_label=message.target_label
         )
 
-        train_class_support = {}
-        val_class_support = {}
-
         for epoch in range(self.global_epochs):
             self._sample_children(sample_size=self.sample_size)
             new_message.new_model = copy.deepcopy(
@@ -121,8 +130,7 @@ class RemoteTrustedProxy(Server):
             aggregated_result = self.aggregation_fn(handlers)
             train_metrics = aggregated_result.train_metrics
             val_metrics = aggregated_result.validation_metrics
-            train_class_support = aggregated_result.train_class_support
-            val_class_support = aggregated_result.validation_class_support
+
             current_total_train_weight += aggregated_result.train_weight
             current_total_val_weight += aggregated_result.validation_weight
 
@@ -147,12 +155,6 @@ class RemoteTrustedProxy(Server):
                 for metric, value in val_metrics.items():
                     val_history[f'val_{metric}'].append(value)
 
-            if self.save_all_models:
-                path = create_model_name(
-                    self.save_all_models_path, self.global_iter_id, epoch)
-                torch.save(self.extract_model_fn(
-                    self.global_model), open(path, 'wb'))
-
             if val_metrics['f1'] > self.best_f1:
                 self.best_epoch = epoch
                 self.best_f1 = val_metrics['f1']
@@ -160,12 +162,6 @@ class RemoteTrustedProxy(Server):
                                   train_history, val_history)
                 torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
 
-                if self.save_state_models:
-                    path = create_model_name_state(
-                        self.save_state_models_path, self.state_id)
-                    torch.save(self.extract_model_fn(
-                        self.global_model), open(path, 'wb'))
-                    self.state_id += 1
                 del ckpt
 
                 with open(self.log_file, 'a') as f:
@@ -180,18 +176,12 @@ class RemoteTrustedProxy(Server):
         current_total_val_weight = math.ceil(
             current_total_val_weight / self.global_epochs)
 
-        if self.send_last_model:
-            best_train_history = train_history
-            best_val_history = val_history
-            result_model = self.global_model.state_dict()
+        ckpt = torch.load(open((f'{self.checkpoint_best_path}'), 'rb'))
+        best_train_history = ckpt.train_metrics
+        best_val_history = ckpt.val_metrics
+        result_model = ckpt.model
 
-        else:
-            ckpt = torch.load(open((f'{self.checkpoint_best_path}'), 'rb'))
-            best_train_history = ckpt.train_metrics
-            best_val_history = ckpt.val_metrics
-            result_model = ckpt.model
-
-            del ckpt
+        del ckpt
 
         if self.use_deltas:
             for key, value in initial_model.items():
@@ -222,8 +212,6 @@ class RemoteTrustedProxy(Server):
             val_metrics,
             current_total_train_weight,
             current_total_val_weight,
-            train_class_support,
-            val_class_support
         )
 
         return [message_result]
@@ -273,16 +261,9 @@ class RemoteTrustedProxy(Server):
             for metric, value in val_metrics.items():
                 self.val_history[f'val_{metric}'].append(value)
 
-        if val_metrics['f1'] > self.best_f1:
-            self.best_f1 = val_metrics['f1']
             ckpt = CheckPoint(message.new_model,
                               self.train_history, self.val_history)
             torch.save(ckpt, open(f'{self.checkpoint_best_path}', 'wb'))
-            if self.save_state_models:
-                path = create_model_name_state(
-                    self.save_state_models_path, self.state_id)
-                torch.save(message.new_model, open(path, 'wb'))
-                self.state_id += 1
 
             del ckpt
 
@@ -292,6 +273,101 @@ class RemoteTrustedProxy(Server):
                          ))
 
         return [aggregated_result]
+
+    def _pers_training(self, message):
+        ckpt = torch.load(open((f'{self.checkpoint_best_path}'), 'rb'))
+        train_history = ckpt.train_metrics
+        val_history = ckpt.val_metrics
+
+        self.global_model = self.training_params.build_model_fn()
+        self.global_model.load_state_dict(copy.deepcopy(ckpt.model))
+        new_message = ServerMessage(
+            new_model=None,
+            validation_msg=message.validation_msg,
+            send_deltas=message.send_deltas,
+            target_label=message.target_label
+        )
+
+        for epoch in range(self.global_epochs):
+            self._sample_children(sample_size=self.sample_size)
+            new_message.new_model = copy.deepcopy(
+                self.global_model.state_dict())
+            handlers = []
+
+            for child in self.selected_children:
+                handlers.append(child.broadcast_train_msg.remote(
+                    new_message))
+
+            aggregated_result = self.aggregation_fn(handlers)
+            new_model = aggregated_result.new_model
+            result_model = copy.deepcopy(new_model)
+
+            if self.use_deltas:
+                for key, value in self.global_model.state_dict().items():
+                    result_model[key] = result_model[key] + value
+
+            self.global_model.load_state_dict(result_model)
+
+            handlers = []
+
+            for child in self.selected_children:
+                new_message.new_model = copy.deepcopy(
+                    result_model)
+                handlers.append(child.evaluate_metrics.remote(
+                    new_message))
+
+            aggregated_result = self.aggregation_fn(handlers)
+            train_metrics = aggregated_result.train_metrics
+            val_metrics = aggregated_result.validation_metrics
+
+            with open(self.log_file, 'a') as f:
+                f.write(
+                    (f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
+                        f'TRAIN = {metrics_to_string(train_metrics)}\t'
+                        f'VAL = {metrics_to_string(val_metrics)}\n')
+                )
+
+            if val_metrics['f1'] > self.best_f1:
+                self.best_epoch = epoch
+                self.best_f1 = val_metrics['f1']
+
+                for metric, value in train_metrics.items():
+                    train_history[f'train_{metric}'].append(value)
+
+                for metric, value in val_metrics.items():
+                    val_history[f'val_{metric}'].append(value)
+
+                ckpt = CheckPoint(self.extract_model_fn(self.global_model),
+                                  train_history, val_history)
+                torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
+
+                del ckpt
+
+                with open(self.log_file, 'a') as f:
+                    f.write((f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
+                             f'CHECKPOINT: Better Model Found\n'
+                             ))
+        return
+
+    def personalize(self, server_message):
+        with open(self.log_file, 'a') as f:
+            f.write(
+                f'\n\n{datetime.datetime.now()}: '
+                f'Starting the personalization phase!\n')
+        if not self.have_activated_children:
+            self.activate_children('a')
+            self.global_model = self.training_params.build_model_fn()
+
+        self._pers_training(server_message)
+        with open(self.log_file, 'a') as f:
+            f.write(
+                f'\n\n{datetime.datetime.now()}: '
+                f'Starting the chldren personalization phase!\n')
+        handlers = [child.personalize.remote(server_message)
+                    for child in self.children_list]
+        for handler in handlers:
+            ray.get(handler)
+        return
 
     def shutdown(self):
 
@@ -320,25 +396,30 @@ class RemoteTrustedProxy(Server):
 
             for metric, value in best_train_history.items():
                 pkl.dump(value,
-                         file=open(f'{os.path.dirname(self.log_file)}/'
-                                   f'{metric}_hist.pkl', 'wb'))
+                         file=open(
+                             f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
 
             for metric, value in best_val_history.items():
                 pkl.dump(value,
-                         file=open(f'{os.path.dirname(self.log_file)}/'
-                                   f'{metric}_hist.pkl', 'wb'))
-
-            with open(self.log_file, 'a') as f:
-                f.write((f'{datetime.datetime.now()}: '
-                         f'FINAL RESULTS: '
-                         f'TRAIN : {metrics_to_string(train_result)}\t'
-                         f'VAL : {metrics_to_string(val_result)}\n'))
+                         file=open(
+                             f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
 
             handlers = [child.shutdown.remote()
                         for child in self.children_list]
 
             for handler in handlers:
                 ray.get(handler)
+
             with open(self.log_file, 'a') as f:
+                f.write('\n')
+                f.write(200*'-')
+                f.write('\n')
+                f.write(f'{datetime.datetime.now()}: Starting the shutdown...\n')
+                f.write(f'Best model: {metrics_to_string(train_result)}\t'
+                        f'{metrics_to_string(val_result)}\n')
+                f.write(200*'-')
+                f.write('\n')
+                f.write(200*'-')
+                f.write('\n')
                 f.write((f'{datetime.datetime.now()}: '
                          f'Shutdown completed\n'))

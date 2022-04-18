@@ -119,13 +119,10 @@ def parse_setting_tag(tree):
     setting_tag = tree.find('setting')
     result_dict = {'use_deltas': True,
                    'use_state': True,
-                   'algorithm': 'HOLDA'}
+                   }
 
     for setting in setting_tag:
-        if setting.tag == 'algorithm':
-            result_dict[setting.tag] = setting.text
-        else:
-            result_dict[setting.tag] = str2bool(setting.text)
+        result_dict[setting.tag] = str2bool(setting.text)
     print(result_dict)
 
     return result_dict
@@ -190,7 +187,6 @@ def parse_server_tag(tree, parent):
     result_dict['training'] = training
 
     use_deltas = parse_setting_tag(parent)['use_deltas']
-    algorithm = parse_setting_tag(parent)['algorithm']
     target_label = parse_task_tag(parent)['target']
 
     metadata = result_dict['meta']
@@ -219,7 +215,7 @@ def parse_server_tag(tree, parent):
             children_list.append(proxy)
 
         elif child.tag == 'client':
-            client = parse_client_tag(child, parent, algorithm)
+            client = parse_client_tag(child, parent)
             num_children += 1
             children_list.append(client)
 
@@ -236,8 +232,9 @@ def parse_proxy_tag(tree, parent):
         result_dict[child.tag] = {}
         for key, value in meta_dict.items():
             result_dict[child.tag][key] = value
-
+    print('Result Dict: ', result_dict.keys())
     training = result_dict['training']
+    pers_training = result_dict['pers_training']
     convert_to_int = ['epochs', 'patience', 'epoch2ckpt']
     convert_to_float = ['sample_size']
     convert_to_bool = ['from_check']
@@ -245,27 +242,31 @@ def parse_proxy_tag(tree, parent):
     for key, value in training.items():
         if key in convert_to_int:
             training[key] = int(value)
+            pers_training[key] = int(value)
         elif key in convert_to_float:
             training[key] = float(value)
+            pers_training[key] = float(value)
         elif key in convert_to_bool:
             training[key] = str2bool(training[key])
+            pers_training[key] = str2bool(value)
     result_dict['training']['build_model_fn'] = parse_function_tag(
         parent.find('model'), 'model_fn')
     result_dict['training'] = training
 
     use_deltas = parse_setting_tag(parent)['use_deltas']
-    use_state = parse_setting_tag(parent)['use_state']
     target_label = parse_task_tag(parent)['target']
     metadata = result_dict['meta']
     training = result_dict['training']
-    server_meta = Metadata_Server(**metadata)
-    server_training = HP_Training_Server(**training)
+    pers_training = result_dict['pers_training']
+    proxy_meta = Metadata_Server(**metadata)
+    proxy_training = HP_Training_Server(**training)
+    pers_training = HP_Training_Server(**pers_training)
     config_dict = {
-        'metadata': server_meta,
-        'training_params': server_training,
+        'metadata': proxy_meta,
+        'training_params': proxy_training,
         'use_deltas': use_deltas,
         'target_label': target_label,
-        'use_state': use_state
+        'pers_training_params': pers_training
     }
 
     config = ProxyConfig(**config_dict)
@@ -290,7 +291,7 @@ def parse_proxy_tag(tree, parent):
     return server, num_children
 
 
-def parse_client_tag(tree, parent, algorithm):
+def parse_client_tag(tree, parent):
     result_dict = {}
     for child in tree:
         meta_dict = _parse_children(tree, child.tag)
@@ -344,17 +345,9 @@ def parse_client_tag(tree, parent, algorithm):
     print('Client Config: ', config)
     print(50*'-')
     print()
-    print(algorithm)
-    if algorithm.lower() == 'fedavg':
-        print('Using FedAvg')
-        server = functools.partial(
-            RemoteLocalClient_FedAvg.remote, config)
-    elif algorithm.lower() == 'holda':
-        print('Using HOLDA')
-        server = functools.partial(
-            RemoteLocalClient_NN.remote, config)
-    else:
-        raise KeyError('The algoritm should be FedAvg/HOLDA')
+
+    server = functools.partial(
+        RemoteLocalClient_NN.remote, config)
     return server
 
 

@@ -133,9 +133,7 @@ def aggregate_nn_unweighted(results_ref):
         train_metrics,
         val_metrics,
         total_train_weight,
-        total_val_weight,
-        0,
-        0
+        total_val_weight
     )
     return result
 
@@ -203,8 +201,6 @@ def aggregate_nn_weighted(results_ref):
         train_metrics,
         val_metrics,
         total_train_weight,
-        total_val_weight,
-        0,
-        0
+        total_val_weight
     )
     return result

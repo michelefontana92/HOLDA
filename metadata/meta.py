@@ -7,24 +7,6 @@ from models.nn import create_net
 
 
 @attr.s(eq=False, frozen=False, slots=True)
-class TrainingMetadata:
-    n_epochs = attr.ib()
-    batch_size = attr.ib()
-    patience = attr.ib()
-
-
-@attr.s(eq=False, frozen=False, slots=True)
-class ValidationMetadata:
-    strategy = attr.ib()
-    n_folds = attr.ib()
-
-
-@attr.s(eq=False, frozen=False, slots=True)
-class ModelMetadata:
-    model = attr.ib()
-
-
-@attr.s(eq=False, frozen=False, slots=True)
 class HP_Training_Server:
     build_model_fn = attr.ib(default=functools.partial(create_net),
                              validator=[attr.validators.instance_of(functools.partial)])
@@ -62,12 +44,6 @@ class Metadata_Server:
     ckpt_epoch = attr.ib(default='default_ckpt_epoch.pt',
                          validator=[
                              attr.validators.instance_of(str)])
-    # path where we save all the produced models at each iteration
-    save_all_models_path = attr.ib(default='',
-                                   validator=[attr.validators.instance_of(str)])
-    # path where we save all the models when saved into the state
-    save_state_models_path = attr.ib(default='',
-                                     validator=[attr.validators.instance_of(str)])
 
 
 @attr.s(eq=False, frozen=False, slots=True)
@@ -108,9 +84,6 @@ class Metadata_Client:
     n_classes = attr.ib(default=2,
                         validator=[attr.validators.instance_of(int)])
 
-    dev_path = attr.ib(default='',
-                       validator=[attr.validators.instance_of(str)])
-
     train_path = attr.ib(default='',
                          validator=[attr.validators.instance_of(str)])
 
@@ -118,23 +91,6 @@ class Metadata_Client:
                        validator=[attr.validators.instance_of(str)])
     test_path = attr.ib(default='',
                         validator=[attr.validators.instance_of(str)])
-
-    train_path_orig = attr.ib(default='',
-                              validator=[attr.validators.instance_of(str)])
-
-    val_path_orig = attr.ib(default='',
-                            validator=[attr.validators.instance_of(str)])
-
-    test_path_orig = attr.ib(default='',
-                             validator=[attr.validators.instance_of(str)])
-
-    # path where we save all the produced models at each iteration
-    save_all_models_path = attr.ib(default='',
-                                   validator=[attr.validators.instance_of(str)])
-
-    # path where we save all the models when saved into the state
-    save_state_models_path = attr.ib(default='',
-                                     validator=[attr.validators.instance_of(str)])
 
 
 @ attr.s(eq=False, frozen=False, slots=True)
@@ -157,10 +113,10 @@ class ServerConfig:
                            validator=[attr.validators.instance_of(str)])
 
 
-@attr.s(eq=False, frozen=False, slots=True)
+@ attr.s(eq=False, frozen=False, slots=True)
 class ProxyConfig(ServerConfig):
-    use_state = attr.ib(default=True,
-                        validator=[attr.validators.instance_of(bool)])
+    pers_training_params = attr.ib(default=HP_Training_Server(),
+                                   validator=[attr.validators.instance_of(HP_Training_Server)])
 
 
 @ attr.s(eq=False, frozen=False, slots=True)

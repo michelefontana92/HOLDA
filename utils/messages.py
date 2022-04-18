@@ -1,4 +1,3 @@
-from nntplib import GroupInfo
 import attr
 
 
@@ -53,5 +52,3 @@ class ClientMessage:
     validation_metrics = attr.ib()
     train_weight = attr.ib()
     validation_weight = attr.ib()
-    train_class_support = attr.ib()
-    validation_class_support = attr.ib()

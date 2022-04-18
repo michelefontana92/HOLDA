@@ -35,39 +35,17 @@ class RemoteLocalClient:
             self.val_history[key] = []
             self.personalized_train_history[key] = []
             self.personalized_val_history[key] = []
-        self.dataset_path = config.metadata.dev_path
+
         self.test_set_path = config.metadata.test_path
         self.train_path = config.metadata.train_path
         self.val_path = config.metadata.val_path
-        self.train_path_orig = config.metadata.train_path_orig
-        self.val_path_orig = config.metadata.val_path_orig
 
         self.global_iter_id = 0
         self.state_id = 0
 
-        self.save_all_models = False
-        self.save_state_models = False
-
-        self.save_all_models_path = config.metadata.save_all_models_path
-        self.save_state_models_path = config.metadata.save_state_models_path
-
         self.history_path = f'{os.path.dirname(self.log_path)}/../History'
         if not os.path.exists(self.history_path):
             os.makedirs(self.history_path)
-
-        if not config.metadata.save_all_models_path == '':
-            path = create_model_name(
-                config.metadata.save_all_models_path, 0, 0)
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-            self.save_all_models = True
-
-        if not config.metadata.save_state_models_path == '':
-            path = create_model_name_state(
-                config.metadata.save_state_models_path, 0)
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-            self.save_state_models = True
 
         self.n_classes = config.metadata.n_classes
 
@@ -121,30 +99,6 @@ class RemoteLocalClient:
         """
         df_proj = dataset[dataset[target_label] == class_id]
         return len(df_proj)
-
-    def _compute_support(self, dataset, target_label):
-        """
-        It computes the support for each target class in the dataset
-
-        Args:
-
-        `dataset`: (Dataframe)
-            The target dataset
-
-        `target_label`: (str)
-            The name of the dataset attribute which represents the target label 
-
-        Returns:
-            dict: 
-                A dictionary of the form `{key : support}`,
-                which contains the number of records labelled with `key` in the given dataset
-
-        """
-        support_dict = {}
-        for class_id in range(self.n_classes):
-            support_dict[str(class_id)] = self._compute_class_support(
-                dataset, class_id, target_label)
-        return support_dict
 
     def _split_dataset(self, dataset, validation_message, target_label):
         """
