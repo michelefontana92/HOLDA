@@ -6,7 +6,6 @@ import datetime
 import math
 from utils.metrics_sklearn import metrics_to_string
 import pickle as pkl
-import os
 from metadata.meta import CheckPoint
 import torch
 
@@ -32,19 +31,19 @@ class RemoteTrustedProxy(Server):
         if self.from_check:
             ckpt = torch.load(open((f'{self.checkpoint_best_path}'
                                     ), 'rb'))
-            val_history = ckpt.val_metrics
+            self.val_history_out = ckpt.val_metrics
             best_val_f1 = ckpt.val_metrics['val_f1'][-1]
             self.global_model = self.training_params.build_model_fn()
             self.global_model.load_state_dict(ckpt.model)
             with open(self.log_file, 'a') as f:
                 f.write(
                     f'{datetime.datetime.now()}: RESTART FROM THE LAST CHECKPOINT\n')
-            epoch = len(val_history['val_f1'])
+            epoch = len(self.val_history_out['val_f1'])
             self.best_epoch = epoch
             print('BEST F1: ', best_val_f1)
         else:
-            self.train_history = {}
-            self.val_history = {}
+            self.train_history_out = {}
+            self.val_history_out = {}
             self.best_f1 = -float('inf')
             self.epoch = 0
 
@@ -79,8 +78,6 @@ class RemoteTrustedProxy(Server):
         self.only_eval = False
         self.epoch += 1
 
-        train_history = {}
-        val_history = {}
         self.global_model = self.training_params.build_model_fn()
         with open(self.log_file, 'a') as f:
             f.write(
@@ -88,7 +85,6 @@ class RemoteTrustedProxy(Server):
                 f'EPOCH {self.epoch}\n')
         current_total_train_weight = 0
         current_total_val_weight = 0
-
         self.global_model.load_state_dict(copy.deepcopy(message.new_model))
         initial_model = copy.deepcopy(message.new_model)
 
@@ -130,10 +126,8 @@ class RemoteTrustedProxy(Server):
             aggregated_result = self.aggregation_fn(handlers)
             train_metrics = aggregated_result.train_metrics
             val_metrics = aggregated_result.validation_metrics
-
             current_total_train_weight += aggregated_result.train_weight
             current_total_val_weight += aggregated_result.validation_weight
-
             with open(self.log_file, 'a') as f:
                 f.write(
                     (f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
@@ -141,25 +135,11 @@ class RemoteTrustedProxy(Server):
                         f'VAL = {metrics_to_string(val_metrics)}\n')
                 )
 
-            if len(train_history) == 0:
-                for metric, value in train_metrics.items():
-                    train_history[f'train_{metric}'] = [value]
-
-                for metric, value in val_metrics.items():
-                    val_history[f'val_{metric}'] = [value]
-
-            else:
-                for metric, value in train_metrics.items():
-                    train_history[f'train_{metric}'].append(value)
-
-                for metric, value in val_metrics.items():
-                    val_history[f'val_{metric}'].append(value)
-
             if val_metrics['f1'] > self.best_f1:
                 self.best_epoch = epoch
                 self.best_f1 = val_metrics['f1']
                 ckpt = CheckPoint(self.extract_model_fn(self.global_model),
-                                  train_history, val_history)
+                                  train_metrics, val_metrics)
                 torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
 
                 del ckpt
@@ -177,8 +157,22 @@ class RemoteTrustedProxy(Server):
             current_total_val_weight / self.global_epochs)
 
         ckpt = torch.load(open((f'{self.checkpoint_best_path}'), 'rb'))
-        best_train_history = ckpt.train_metrics
-        best_val_history = ckpt.val_metrics
+        train_metrics = ckpt.train_metrics
+        val_metrics = ckpt.val_metrics
+        if len(self.train_history_out) == 0:
+            for metric, value in train_metrics.items():
+                self.train_history_out[f'train_{metric}'] = [value]
+
+            for metric, value in val_metrics.items():
+                self.val_history_out[f'val_{metric}'] = [value]
+
+        else:
+            for metric, value in train_metrics.items():
+                self.train_history_out[f'train_{metric}'].append(value)
+
+            for metric, value in val_metrics.items():
+                self.val_history_out[f'val_{metric}'].append(value)
+
         result_model = ckpt.model
 
         del ckpt
@@ -188,20 +182,13 @@ class RemoteTrustedProxy(Server):
                 result_model[key] = result_model[key] - value
 
         self.global_model = self.init_model_fn(self.global_model, result_model)
-        train_result = {}
-        val_result = {}
-
-        for metric, values in best_train_history.items():
-            train_result[metric] = values[-1]
-        for metric, values in best_val_history.items():
-            val_result[metric] = values[-1]
 
         with open(self.log_file, 'a') as f:
             f.write(
                 (f'{datetime.datetime.now()}: ENDED TRAINING: '
                  f'Best epoch {self.best_epoch + 1}: '
-                 f'TRAIN = {metrics_to_string(train_result)}\t'
-                 f'VAL = {metrics_to_string(val_result)}\n\n')
+                 f'TRAIN = {metrics_to_string(train_metrics)}\t'
+                 f'VAL = {metrics_to_string(val_metrics)}\n\n')
             )
 
         self.global_iter_id += 1
@@ -247,22 +234,8 @@ class RemoteTrustedProxy(Server):
                  f'TRAIN = {metrics_to_string(train_metrics)}\t'
                  f'VAL = {metrics_to_string(val_metrics)}\n')
             )
-        if len(self.train_history) == 0:
-            for metric, value in train_metrics.items():
-                self.train_history[f'train_{metric}'] = [value]
-
-            for metric, value in val_metrics.items():
-                self.val_history[f'val_{metric}'] = [value]
-
-        else:
-            for metric, value in train_metrics.items():
-                self.train_history[f'train_{metric}'].append(value)
-
-            for metric, value in val_metrics.items():
-                self.val_history[f'val_{metric}'].append(value)
-
             ckpt = CheckPoint(message.new_model,
-                              self.train_history, self.val_history)
+                              self.train_history_out, self.val_history_out)
             torch.save(ckpt, open(f'{self.checkpoint_best_path}', 'wb'))
 
             del ckpt
@@ -276,8 +249,6 @@ class RemoteTrustedProxy(Server):
 
     def _pers_training(self, message):
         ckpt = torch.load(open((f'{self.checkpoint_best_path}'), 'rb'))
-        train_history = ckpt.train_metrics
-        val_history = ckpt.val_metrics
 
         self.global_model = self.training_params.build_model_fn()
         self.global_model.load_state_dict(copy.deepcopy(ckpt.model))
@@ -330,15 +301,8 @@ class RemoteTrustedProxy(Server):
             if val_metrics['f1'] > self.best_f1:
                 self.best_epoch = epoch
                 self.best_f1 = val_metrics['f1']
-
-                for metric, value in train_metrics.items():
-                    train_history[f'train_{metric}'].append(value)
-
-                for metric, value in val_metrics.items():
-                    val_history[f'val_{metric}'].append(value)
-
                 ckpt = CheckPoint(self.extract_model_fn(self.global_model),
-                                  train_history, val_history)
+                                  train_metrics, val_metrics)
                 torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
 
                 del ckpt
@@ -347,6 +311,24 @@ class RemoteTrustedProxy(Server):
                     f.write((f'{datetime.datetime.now()}: Epoch {epoch + 1}: '
                              f'CHECKPOINT: Better Model Found\n'
                              ))
+
+        ckpt = torch.load(open((f'{self.checkpoint_best_path}'), 'rb'))
+        train_metrics = ckpt.train_metrics
+        val_metrics = ckpt.val_metrics
+        if len(self.train_history_out) == 0:
+            for metric, value in train_metrics.items():
+                self.train_history_out[f'train_{metric}'] = [value]
+
+            for metric, value in val_metrics.items():
+                self.val_history_out[f'val_{metric}'] = [value]
+
+        else:
+            for metric, value in train_metrics.items():
+                self.train_history_out[f'train_{metric}'].append(value)
+
+            for metric, value in val_metrics.items():
+                self.val_history_out[f'val_{metric}'].append(value)
+
         return
 
     def personalize(self, server_message):
@@ -381,28 +363,19 @@ class RemoteTrustedProxy(Server):
                 f.write((f'{datetime.datetime.now()}: '
                          f'Shutdown completed\n'))
         else:
-            ckpt = torch.load(open(f'{self.checkpoint_best_path}', 'rb'))
-
-            best_train_history = ckpt.train_metrics
-            best_val_history = ckpt.val_metrics
-
-            train_result = {}
-            val_result = {}
-
-            for metric, values in best_train_history.items():
-                train_result[metric] = values[-1]
-            for metric, values in best_val_history.items():
-                val_result[metric] = values[-1]
-
-            for metric, value in best_train_history.items():
-                pkl.dump(value,
+            final_train_metrics = {}
+            final_val_metrics = {}
+            for metric in self.train_history_out.keys():
+                final_train_metrics[metric] = self.train_history_out[metric][-1]
+                pkl.dump(self.train_history_out[metric],
                          file=open(
-                             f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
+                    f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
 
-            for metric, value in best_val_history.items():
-                pkl.dump(value,
+            for metric in self.val_history_out.keys():
+                final_val_metrics[metric] = self.val_history_out[metric][-1]
+                pkl.dump(self.val_history_out[metric],
                          file=open(
-                             f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
+                    f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
 
             handlers = [child.shutdown.remote()
                         for child in self.children_list]
@@ -415,8 +388,8 @@ class RemoteTrustedProxy(Server):
                 f.write(200*'-')
                 f.write('\n')
                 f.write(f'{datetime.datetime.now()}: Starting the shutdown...\n')
-                f.write(f'Best model: {metrics_to_string(train_result)}\t'
-                        f'{metrics_to_string(val_result)}\n')
+                f.write(f'Best model: {metrics_to_string(final_train_metrics)}\t'
+                        f'{metrics_to_string(final_val_metrics)}\n')
                 f.write(200*'-')
                 f.write('\n')
                 f.write(200*'-')

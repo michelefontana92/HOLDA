@@ -26,15 +26,12 @@ class RemoteLocalClient:
         self.ckpt_best = config.metadata.ckpt_best
         self.log_path = config.metadata.log_path
         self.metrics = config.metadata.metrics
-        self.train_history = {'loss': []}
-        self.val_history = {'loss': []}
-        self.personalized_train_history = {'loss': []}
-        self.personalized_val_history = {'loss': []}
+        self.train_history_out = {'train_loss': []}
+        self.val_history_out = {'val_loss': []}
+
         for key in self.metrics.keys():
-            self.train_history[key] = []
-            self.val_history[key] = []
-            self.personalized_train_history[key] = []
-            self.personalized_val_history[key] = []
+            self.train_history_out[f'train_{key}'] = []
+            self.val_history_out[f'val_{key}'] = []
 
         self.test_set_path = config.metadata.test_path
         self.train_path = config.metadata.train_path

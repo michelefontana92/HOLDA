@@ -48,6 +48,9 @@ class Server:
         self.patience = self.training_params.patience
         self.sample_size = config.training_params.sample_size
 
+        self.train_history_in = {}
+        self.val_history_in = {}
+
         self.aggregation_fn = config.training_params.aggregation_fn
         self.init_model_fn = config.training_params.init_model_fn
         self.extract_model_fn = config.training_params.extract_model_fn
@@ -257,21 +260,18 @@ class Server:
             ckpt = torch.load(open((f'{self.checkpoint_best_path}'
                                     ), 'rb'))
 
-            train_history = ckpt.train_metrics
-            val_history = ckpt.val_metrics
+            self.train_history_in = ckpt.train_metrics
+            self.val_history_in = ckpt.val_metrics
             best_val_f1 = ckpt.val_metrics['val_f1'][-1]
             self.global_model = self.training_params.build_model_fn()
             self.global_model.load_state_dict(ckpt.model)
             with open(self.log_file, 'a') as f:
                 f.write(
                     f'{datetime.datetime.now()}: RESTART FROM THE LAST CHECKPOINT\n')
-            epoch = len(val_history['val_f1'])
+            epoch = len(self.val_history_in['val_f1'])
             self.best_epoch = epoch
             print('BEST F1: ', best_val_f1)
         else:
-            train_history = {}
-            val_history = {}
-
             best_val_f1 = -float('inf')
             self.global_model = self.training_params.build_model_fn()
             epoch = 0
@@ -299,12 +299,6 @@ class Server:
         train_metrics = aggregated_result.train_metrics
         val_metrics = aggregated_result.validation_metrics
 
-        for metric, value in train_metrics.items():
-            train_history[f'train_{metric}'] = [value]
-
-        for metric, value in val_metrics.items():
-            val_history[f'val_{metric}'] = [value]
-
         with open(self.log_file, 'a') as f:
             f.write(
                 (f'{datetime.datetime.now()}: Epoch 0: '
@@ -312,11 +306,17 @@ class Server:
                  f'VAL = {metrics_to_string(val_metrics)}\n')
             )
 
+        for metric, value in train_metrics.items():
+            self.train_history_in[f'train_{metric}'] = [value]
+
+        for metric, value in val_metrics.items():
+            self.val_history_in[f'val_{metric}'] = [value]
+
         if val_metrics['f1'] > best_val_f1:
             self.best_epoch = epoch
             best_val_f1 = val_metrics['f1']
             ckpt = CheckPoint(self.extract_model_fn(self.global_model),
-                              train_history, val_history)
+                              train_metrics, val_metrics)
             torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
 
             del ckpt
@@ -349,19 +349,11 @@ class Server:
             train_metrics = aggregated_result.train_metrics
             val_metrics = aggregated_result.validation_metrics
 
-            if len(train_history) == 0:
-                for metric, value in train_metrics.items():
-                    train_history[f'train_{metric}'] = [value]
+            for metric, value in train_metrics.items():
+                self.train_history_in[f'train_{metric}'].append(value)
 
-                for metric, value in val_metrics.items():
-                    val_history[f'val_{metric}'] = [value]
-
-            else:
-                for metric, value in train_metrics.items():
-                    train_history[f'train_{metric}'].append(value)
-
-                for metric, value in val_metrics.items():
-                    val_history[f'val_{metric}'].append(value)
+            for metric, value in val_metrics.items():
+                self.val_history_in[f'val_{metric}'].append(value)
 
             with open(self.log_file, 'a') as f:
                 f.write(
@@ -375,8 +367,9 @@ class Server:
                 self.best_epoch = epoch
                 best_val_f1 = val_metrics['f1']
                 ckpt = CheckPoint(self.extract_model_fn(self.global_model),
-                                  train_history, val_history,
+                                  train_metrics, val_metrics,
                                   )
+
                 torch.save(ckpt, open((f'{self.checkpoint_best_path}'), 'wb'))
 
                 with open(self.log_file, 'a') as f:
@@ -395,7 +388,7 @@ class Server:
 
             if epoch % self.epoch2ckpt == 0:
                 ckpt = CheckPoint(self.extract_model_fn(self.global_model),
-                                  train_history, val_history,
+                                  train_metrics, val_metrics,
                                   )
 
                 torch.save(ckpt, open((f'{self.checkpoint_epoch_path}'), 'wb'))
@@ -412,14 +405,14 @@ class Server:
 
         ckpt = torch.load(open((f'{self.checkpoint_best_path}'), 'rb'))
         best_model = ckpt.model
-        best_train_history = ckpt.train_metrics
-        best_val_history = ckpt.val_metrics
+        best_train_metric = ckpt.train_metrics
+        best_val_metric = ckpt.val_metrics
 
         self.global_model = self.init_model_fn(self.global_model, best_model)
         torch.save(self.global_model,
                    f'{os.path.dirname(self.checkpoint_best_path)}/global_model.h5')
         del ckpt
-        return best_train_history, best_val_history
+        return best_train_metric, best_val_metric
 
     def execute(self):
         """
@@ -436,9 +429,9 @@ class Server:
 
         """
         with open(self.log_file, 'w') as f:
-            f.write(f'{datetime.datetime.now()}: {self.id} ATTIVATO\n')
-            f.write(f'Training: Eseguo {self.global_epochs} epoche globali '
-                    f'Early stopping patience = {self.patience} epoche\n'
+            f.write(f'{datetime.datetime.now()}: {self.id} ACTIVATED\n')
+            f.write(f'Training: I execute {self.global_epochs} global epochs '
+                    f'Early stopping patience = {self.patience} epochs\n'
                     f'Training params: {self.config.training_params}\n')
             children_id = [ray.get(child.get_id.remote())
                            for child in self.children_list]
@@ -447,21 +440,15 @@ class Server:
         self.activate_children('w')
         self.have_activated_children = True
 
-        train_history, val_history = self.federated_training()
-        train_result = {}
-        val_result = {}
-        for metric, values in train_history.items():
-            train_result[metric] = values[-1]
-        for metric, values in val_history.items():
-            val_result[metric] = values[-1]
+        best_train_metric, best_val_metric = self.federated_training()
 
         with open(self.log_file, 'a') as f:
             f.write((f'{datetime.datetime.now()}: '
                      f'Ended HOLD OUT: FINAL RESULTS: '
-                     f'TRAIN = {metrics_to_string(train_result)}\t'
-                     f'VAL = {metrics_to_string(val_result)}\n\n'))
+                     f'TRAIN = {metrics_to_string(best_train_metric)}\t'
+                     f'VAL = {metrics_to_string(best_val_metric)}\n\n'))
 
-        return train_history, val_history
+        return best_train_metric, best_val_metric
 
     def personalize(self):
         with open(self.log_file, 'a') as f:
@@ -493,18 +480,17 @@ class Server:
         for handler in handlers:
             ray.get(handler)
 
-        ckpt = torch.load(open(self.checkpoint_best_path, 'rb'))
-        train_metrics = {}
-        val_metrics = {}
-        for metric in ckpt.train_metrics.keys():
-            train_metrics[metric] = ckpt.train_metrics[metric][-1]
-            pkl.dump(ckpt.train_metrics[metric],
+        final_train_metrics = {}
+        final_val_metrics = {}
+        for metric in self.train_history_in.keys():
+            final_train_metrics[metric] = self.train_history_in[metric][-1]
+            pkl.dump(self.train_history_in[metric],
                      file=open(
                          f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
 
-        for metric in ckpt.val_metrics.keys():
-            val_metrics[metric] = ckpt.val_metrics[metric][-1]
-            pkl.dump(ckpt.val_metrics[metric],
+        for metric in self.val_history_in.keys():
+            final_val_metrics[metric] = self.val_history_in[metric][-1]
+            pkl.dump(self.val_history_in[metric],
                      file=open(
                          f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
 
@@ -513,8 +499,8 @@ class Server:
             f.write(200*'-')
             f.write('\n')
             f.write(f'{datetime.datetime.now()}: Starting the shutdown...\n')
-            f.write(f'Best model: {metrics_to_string(train_metrics)}\t'
-                    f'{metrics_to_string(val_metrics)}\n')
+            f.write(f'Best model: {metrics_to_string(final_train_metrics)}\t'
+                    f'{metrics_to_string(final_val_metrics)}\n')
             f.write(200*'-')
             f.write('\n')
             f.write(200*'-')

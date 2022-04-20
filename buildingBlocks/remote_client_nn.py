@@ -220,13 +220,12 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             val_set, server_message.target_label, self.batch_size, shuffle=True)
 
         epoch = 0
-        best_epoch = 0
 
         while (not early_stopping) and (epoch < self.n_epochs):
             total_loss = 0.0
             num_batches = 0
             self.model.train()
-            for i, batch in enumerate(train_loader):
+            for _, batch in enumerate(train_loader):
                 num_batches += 1
                 data = batch['data']
                 labels = batch['target']
@@ -264,15 +263,9 @@ class RemoteLocalClient_NN(RemoteLocalClient):
             if val_f1 > best_val_f1:
                 best_val_f1 = val_f1
                 waiting_epochs = 0
-                best_epoch = epoch
 
                 if val_f1 > self.state_best_f1:
                     self.state_best_f1 = val_f1
-
-                    for metric, value in train_metrics.items():
-                        self.train_history[metric].append(value)
-                    for metric, value in val_metrics.items():
-                        self.val_history[metric].append(value)
 
                     chkpoint = CheckPoint(
                         self.model.state_dict(),
@@ -332,6 +325,12 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
         self.current_iteration += 1
         self.global_iter_id += 1
+
+        for metric, value in ckpt.train_metrics.items():
+            self.train_history_out[f'train_{metric}'].append(value)
+        for metric, value in ckpt.val_metrics.items():
+            self.val_history_out[f'val_{metric}'].append(value)
+
         client_msg = ClientMessage(
             result_model,
             ckpt.train_metrics,
@@ -405,10 +404,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                          f'CHECKPOINT: Better Model Found\n'
                          ))
             self.state_best_f1 = val_metrics['f1']
-            for metric, value in train_metrics.items():
-                self.train_history[metric].append(value)
-            for metric, value in val_metrics.items():
-                self.val_history[metric].append(value)
 
             chkpoint = CheckPoint(
                 self.model.state_dict(),
@@ -521,11 +516,6 @@ class RemoteLocalClient_NN(RemoteLocalClient):
                 best_val_f1 = val_f1
                 waiting_epochs = 0
 
-                for metric, value in train_metrics.items():
-                    self.personalized_train_history[metric].append(value)
-                for metric, value in val_metrics.items():
-                    self.personalized_val_history[metric].append(value)
-
                 chkpoint = CheckPoint(
                     self.model.state_dict(),
                     train_metrics,
@@ -569,7 +559,10 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
         ckpt = torch.load(open(self.ckpt_best, 'rb'))
         result_model = ckpt.model
-
+        for metric, value in ckpt.train_metrics.items():
+            self.train_history_out[f'train_{metric}'].append(value)
+        for metric, value in ckpt.val_metrics.items():
+            self.val_history_out[f'val_{metric}'].append(value)
         path = create_model_name_monitor(
             f'{os.path.dirname(self.ckpt_best)}/{self.id}.pt',
             self.global_iter_id, input=False)
@@ -583,38 +576,27 @@ class RemoteLocalClient_NN(RemoteLocalClient):
 
         It shuts down the local client
         """
-        ckpt = torch.load(open(self.ckpt_best, 'rb'))
+        final_train_metrics = {}
+        final_val_metrics = {}
+        for metric in self.train_history_out.keys():
+            final_train_metrics[metric] = self.train_history_out[metric][-1]
+            pkl.dump(self.train_history_out[metric],
+                     file=open(
+                f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
 
-        train_metrics = ckpt.train_metrics
-        val_metrics = ckpt.val_metrics
-
-        for key, value in self.train_history.items():
-            if len(value) > 0:
-                path = f'{self.history_path}/{self.id}_train_{key}_hist.pkl'
-                pkl.dump(value, file=open(path, 'wb'))
-
-        for key, value in self.val_history.items():
-            if len(value) > 0:
-                path = f'{self.history_path}/{self.id}_val_{key}_hist.pkl'
-                pkl.dump(value, file=open(path, 'wb'))
-
-        for key, value in self.personalized_train_history.items():
-            if len(value) > 0:
-                path = f'{self.history_path}/personalized_{self.id}_train_{key}_hist.pkl'
-                pkl.dump(value, file=open(path, 'wb'))
-
-        for key, value in self.personalized_val_history.items():
-            if len(value) > 0:
-                path = f'{self.history_path}/personalized_{self.id}_val_{key}_hist.pkl'
-                pkl.dump(value, file=open(path, 'wb'))
+        for metric in self.val_history_out.keys():
+            final_val_metrics[metric] = self.val_history_out[metric][-1]
+            pkl.dump(self.val_history_out[metric],
+                     file=open(
+                f'{self.history_path}/{self.id}_{metric}_hist.pkl', 'wb'))
 
         with open(self.log_path, 'a') as f:
             f.write('\n')
             f.write(200*'-')
             f.write('\n')
             f.write(f'{datetime.datetime.now()}: Starting the shutdown...\n')
-            f.write(f'Best model: Training {metrics_to_string(train_metrics)}\t'
-                    f'VL:{metrics_to_string(val_metrics)}\n')
+            f.write(f'Best model: Training {metrics_to_string(final_train_metrics)}\t'
+                    f'VL:{metrics_to_string(final_val_metrics)}\n')
             f.write(200*'-')
             f.write('\n\n')
             f.write(200*'-')

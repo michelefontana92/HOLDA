@@ -1,6 +1,5 @@
 import functools
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from buildingBlocks.remote_client_fedavg import RemoteLocalClient_FedAvg
 from buildingBlocks.remote_client_nn import RemoteLocalClient_NN
 from buildingBlocks.remote_tproxy import RemoteTrustedProxy
 from buildingBlocks.server import Server
