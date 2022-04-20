@@ -27,12 +27,12 @@ This file contains the description of:
   - the training parameters for each node (server, proxy, client)
 
 At the high level, the file has to include the following tags:
-    - `root_node`: it is the root of the tree
-    - `task`: It describes the task that has to be solved.
-    - `model`: It describes how to build the model that has to be trained during the execution of `HOLDA`.
-    - `metrics` : It describes what are the metrics that have to be computed during the training.
-    - `setting` : It specifies some setting parameters.
-    - `architecture` : It describes the structure of the federation.
+- `root_node`: it is the root of the tree
+- `task`: It describes the task that has to be solved.
+- `model`: It describes how to build the model that has to be trained during the execution of `HOLDA`.
+- `metrics` : It describes what are the metrics that have to be computed during the training.
+- `setting` : It specifies some setting parameters.
+- `architecture` : It describes the structure of the federation.
 ### The `task` node
 
 
