@@ -338,3 +338,23 @@ An example is the following one, where we require that the client has to perform
   </training>
 </pers_client>
 ```
+
+# Reference
+You can cite this work with
+
+```
+@inproceedings{DBLP:conf/pst/FontanaNM21,
+  author    = {Michele Fontana and
+               Francesca Naretto and
+               Anna Monreale},
+  title     = {A new approach for cross-silo federated learning and its privacy risks},
+  booktitle = {18th International Conference on Privacy, Security and Trust, {PST}
+               2021, Auckland, New Zealand, December 13-15, 2021},
+  pages     = {1--10},
+  publisher = {{IEEE}},
+  year      = {2021},
+  url       = {https://doi.org/10.1109/PST52912.2021.9647753},
+  doi       = {10.1109/PST52912.2021.9647753},
+}
+
+ ```
