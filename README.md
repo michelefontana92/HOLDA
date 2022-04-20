@@ -36,9 +36,9 @@ At the high level, the file has to include the following tags:
 ### The `task` node
 It describes the task that has to be solved. 
 The node has to contain the following tags:
--`n_features` : the number of features of the dataset
--`n_classes` : the number of target classes of the dataset
--`target` : the name of the target column of the dataset
+- `n_features` : the number of features of the dataset
+- `n_classes` : the number of target classes of the dataset
+- `target` : the name of the target column of the dataset
 
 An example is the following one:
 ```
@@ -100,6 +100,11 @@ is just like calling `models.nn.simple_net(input=103,hidden_1=200,dropout=0.2,ou
 This structure is kept the same whenever we need to perform any function invocation during the trainign algorithm.
 In particular this is the schema adopted for describing the loss function and the local optimizer.
 
+### The `setting` node
+It is used to set up some options during the training.
+As of now, it contains just one available option:
+- `use_deltas` : If it is True, the node encrypts the model parameters using the delta encoding.
+  
 ### The `metrics` node
 It describes what are the metrics that have to be computed during the training, other than the loss function.
 The system currently supports the following metrics: 
@@ -121,3 +126,215 @@ I highly recommend to keep at least the `f1` metric, since it is the one used to
 
 ### The `architecture` node
 It describes the structure of the federation.
+The main idea under this structure is: if we have 
+```
+<node1>
+  <node2> </node2>
+  <node3> </node3>
+</node1>
+```
+This means that `node2` and `node3` are directly connected to `node1`.
+
+The available tags in this section are:
+- `<server>` 
+- `<proxy>`
+- `<client>`
+
+The `<server>` has to be the root of the hierarchy. It can have any number of  `<proxy>` or  `<client>` children.
+The `<proxy>` can have any number of  `<proxy>` or  `<client>` children.
+The `<client>` has to be a leaf.
+
+As an example, in order to describe the federation depicted in the picture at the beginning we need to provide the following structure:
+```
+<architecture>
+  <server>
+    <proxy>
+      <client></client>
+      <client></client>
+    </proxy>
+     
+    <proxy>
+      <client></client>
+      <client></client>
+    </proxy>
+  </server>
+<\architecture>
+```
+
+Inside each node we have to specify additional metadata. In the next subsection we will look closely on how to do that.
+
+#### The `server` tag
+
+The metadata are specified inside the `<meta>` tag. 
+Inside this tag we can specify several information:
+
+- `<id>` : the identifier of the node
+- `<log_path>` : the path of the log file
+- `<ckpt_best>` : the path of the checkpoint file, where the best model is saved (I suggest to use a .pt file)
+- `<ckpt_epoch>` : the path of the checkpoint file, where we save the model every `epoch2ckpt` iterations.
+
+An example is 
+```
+<server>
+  <meta>
+    <id>ServerS</id>
+    <log_path>./examples/experiments/hier/logs/log_ServerS.txt</log_path>
+    <ckpt_best>./examples/experiments/hier/ServerSCkpt/ServerS_best.pt</ckpt_best>
+    <ckpt_epoch>./examples/experiments/hier/ServerSCkpt/ServerS_epoch.pt</ckpt_epoch>
+  </meta>
+</server>
+```
+
+
+In order to specify what are the training parameters, we need to use the `<training>` tag.
+If a tag is not provided the system will use the corresponding default value.
+- `<epochs>` : the number of global epochs that have to be executed by the server (default = 1)
+- `<batch_size>` : the batch size (default = 128)
+- `<patience>` : the value of the patience used for the early stopping  (default = 10)
+- `<sample_size>` : the fraction of clients sampled at every iteration. The value must be between 0 (excluded) and 1 (included) (default = 1)
+- `<aggregation_fn>` : the aggregation function. Since this is a function, it has to be used the same schema adopted for the `model` tag.  (default = aggregations.nn_aggregation.aggregate_nn_weighted)
+
+An example is the following one:
+```
+<server>
+<training>
+  <epochs>50</epochs>
+  <patience>10</patience>
+   <epoch2ckpt>10</epoch2ckpt>
+   <sample_size>1</sample_size>
+ </training>
+ </server>
+```
+
+
+#### The `proxy` tag
+The metadata are specified inside the `<meta>` tag. 
+This tag is identical to the one used for the server.
+```
+<server>
+  <meta>
+    <id>ProxyP0</id>
+    <log_path>./examples/experiments/hier/logs/log_ProxyP0.txt</log_path>
+    <ckpt_best>./examples/experiments/hier/ProxyP0Ckpt/ProxyP0_best.pt</ckpt_best>
+    <ckpt_epoch>./examples/experiments/hier/ProxyP0Ckpt/ProxyP0_epoch.pt</ckpt_epoch>
+  </meta>
+</server>
+```
+
+
+In order to specify what are the training parameters, we need to use the `<training>` tag.
+This tag is identical to the one used for the server.
+
+An example is:
+```
+<proxy>
+  <training>
+    <epochs>50</epochs>
+    <patience>10</patience>
+     <epoch2ckpt>10</epoch2ckpt>
+     <sample_size>1</sample_size>
+   </training>
+ </proxy>
+```
+
+In the proxy tag we need to insert information about the personalization phase. This is inserted into the `<pers_training>` tag.
+The personalization phase executes `HOLDA` on the subtree rooted in this proxy, where the proxy behaves like a main server w.r.t. its subtree.
+The available options are the ones that we have for the `<training>` tag.
+
+```
+<proxy>
+  <pers_training>
+      <epochs>30</epochs>
+      <patience>10</patience>
+      <epoch2ckpt>10</epoch2ckpt>
+      <sample_size>0.75</sample_size>
+  </pers_training>
+```
+
+
+#### The `client` tag
+The metadata are specified inside the `<meta>` tag. 
+Inside this tag we can specify several information:
+
+- `<id>` : the identifier of the node
+- `<log_path>` : the path of the log file
+- `<ckpt_best>` : the path of the checkpoint file, where the best model is saved (I suggest to use a .pt file)
+- `<ckpt_epoch>` : the path of the checkpoint file, where we save the model every `epoch2ckpt` iterations.
+- `<train_path>` : The path of the training set. It has to be a csv file
+-  `<val_path>` : The path of the validation set. It has to be a csv file.
+-  `<test_path>` : The path of the test set. It has to be a csv file. NOTE: It is still unused. You can use the path of the training/validation set.
+
+
+An example is: 
+```
+<client>
+  <meta>
+     <id>Client_C0</id>
+     <log_path>./examples/experiments/hier/logs/log_clientC0.txt</log_path>
+     <ckpt_best>./examples/experiments/hier/ClientC0Ckpt/clientC0_best.pt</ckpt_best>
+     <ckpt_epoch>./examples/experiments/hier/ClientC0Ckpt/clientC0_epoch.pt</ckpt_epoch>
+     <train_path>./examples/datasets/node_0/adult_train_enc.csv</train_path>
+     <val_path>./examples/datasets/node_0/adult_val_enc.csv</val_path>
+     <test_path>./examples/datasets/node_0/adult_test_enc.csv</test_path>
+   </meta>
+</client>
+```
+
+
+
+In order to specify what are the training parameters, we need to use the `<training>` tag.
+If a tag is not provided the system will use the corresponding default value.
+The available options are:
+
+- `<epochs>` : the number of local training epochs that have to be executed by the client (default = 1)
+- `<batch_size>` : the batch size (default = 128)
+- `<patience>` : the value of the patience used for the early stopping  (default = 10)
+- `<epoch2ckpt>` : the system executes a checkpoint of the current model every `epoch2ckpt` epochs (default = 10)
+- `<loss>` : the loss function. Since this is a function, it has to be used the same schema adopted for the `model` tag.  (default = nn.CrossEntropyLoss)
+- `<optimizer>` : the optimizer function. Since this is a function, it has to be used the same schema adopted for the `model` tag.  (default = functools.partial(optim.Adam,  lr=1e-4))
+- `<use_weights>` : If True, it will be used a weighted loss and metrics (default = True)
+
+An example is the following one:
+
+```
+<client>
+  <training>
+      <epochs>3</epochs>
+      <batch_size>128</batch_size>
+      <use_weights>True</use_weights>
+      <optimizer>
+         <optimizer_fn>torch.optim.Adam</optimizer_fn>
+            <params>
+                  <lr>1e-5</lr>
+            </params>
+         </optimizer>
+       <loss>
+          <loss_fn>torch.nn.CrossEntropyLoss</loss_fn>
+       </loss>
+  </training>
+</client>
+```
+
+In order to specify what are the training parameters of the personalization phase, we need to use the `<pers_training>` tag.
+The structure of this tag is the same as of the `<training>` tag.
+
+An example is the following one, where we require that the client has to perform at most 300 training epochs.
+```
+<client>
+  <pers_training>
+      <epochs>300</epochs>
+      <patience>10</patience>
+      <batch_size>128</batch_size>
+      <use_weights>True</use_weights>
+      <optimizer>
+         <optimizer_fn>torch.optim.Adam</optimizer_fn>
+            <params>
+                  <lr>1e-5</lr>
+            </params>
+         </optimizer>
+       <loss>
+          <loss_fn>torch.nn.CrossEntropyLoss</loss_fn>
+       </loss>
+  </training>
+</pers_client>
+```
