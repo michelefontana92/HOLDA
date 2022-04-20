@@ -2,7 +2,7 @@
 This is the official code for the paper [A new approach for cross-silo federated learning and its privacy risks](https://ieeexplore.ieee.org/document/9647753)
 
 # HOLDA
-![ezcv logo](./images/holda.png)
+![holda logo](./images/holda.png)
 # Usage
 The main entry point of the system is the `holda.py` file.
 
@@ -34,10 +34,90 @@ At the high level, the file has to include the following tags:
 - `setting` : It specifies some setting parameters.
 - `architecture` : It describes the structure of the federation.
 ### The `task` node
+It describes the task that has to be solved. 
+The node has to contain the following tags:
+-`n_features` : the number of features of the dataset
+-`n_classes` : the number of target classes of the dataset
+-`target` : the name of the target column of the dataset
 
+An example is the following one:
+```
+<task>
+        <n_features> 103 </n_features>
+        <n_classes>2</n_classes>
+        <target>income</target>
+</task>
+```
+Here, we are saying that our dataset has 103 attributes, 2 possible classes and the target column is named `income`.
 
 ### The `model` node
+It describes how to build the model that has to be trained during the execution of `HOLDA`.
+The node has to contain the following tags:
+-`model_fn` : the function that has to be used to instantiate the model (it needs the whole path).
+-`params` : this tag has one child for each parameters needed by the `model_fn` function. The tag of the child has to be the name of the correspondig parameter.
+
+An example is the following one.
+Assume that we construct the model using this function
+
+```
+def create_simple_net(hidden_1, dropout, output, input):
+    net = SimpleNet(hidden_1, dropout, output, input)
+    return net
+```
+
+where `SimpleNet` is defined as:
+
+```
+class SimpleNet(nn.Module):
+    def __init__(self, hidden_1, dropout, output, input):
+        super(SimpleNet, self).__init__()
+
+        self.fc1 = nn.Linear(input, hidden_1)
+        self.fc2 = nn.Linear(hidden_1, output)
+        self.drop = nn.Dropout(dropout)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = self.drop(x)
+        x = self.fc2(x)
+        return x
+```
+
+Then, the following tag,
+```
+<model>
+  <model_fn>models.nn.create_simple_net</model_fn>
+   <params>
+      <input>103</input>
+      <hidden_1>200</hidden_1>
+      <dropout>0.2</dropout>
+      <output>2</output>
+   </params>
+</model>
+```
+is just like calling `models.nn.simple_net(input=103,hidden_1=200,dropout=0.2,output=2)`
+
+This structure is kept the same whenever we need to perform any function invocation during the trainign algorithm.
+In particular this is the schema adopted for describing the loss function and the local optimizer.
 
 ### The `metrics` node
+It describes what are the metrics that have to be computed during the training, other than the loss function.
+The system currently supports the following metrics: 
+- `accuracy`
+- `precision`
+- `recall`
+- `f1`
+
+I highly recommend to keep at least the `f1` metric, since it is the one used to choose the best generalizing model.
+
+```
+<metrics>
+  <metric>accuracy</metric>
+  <metric>precision</metric>
+  <metric>recall</metric>
+  <metric>f1</metric>
+</metrics>
+```
 
 ### The `architecture` node
+It describes the structure of the federation.
